@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" fill="#111217">
+  <title>Arvexo</title>
+  <g id="bar"><rect x="45" y="0" width="10" height="34.4" rx="1"/></g>
+  <use href="#bar" transform="rotate(60 50 50)"/>
+  <use href="#bar" transform="rotate(120 50 50)"/>
+  <use href="#bar" transform="rotate(180 50 50)"/>
+  <use href="#bar" transform="rotate(240 50 50)"/>
+  <use href="#bar" transform="rotate(300 50 50)"/>
+</svg>

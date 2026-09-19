@@ -8,6 +8,7 @@ import {
 import { Manrope } from "next/font/google";
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { LogoMark } from "@/components/LogoMark";
 import { ParticleField } from "@/components/ParticleField";
 import "../app/landing.css";
 
@@ -100,7 +101,7 @@ export function Landing() {
 
       <header className="site-header">
         <a className="rp-brand" href="#top" aria-label="ARVEXO Radar — главная">
-          <img src="/assets/arvexo-mark-v5.png" alt="" />
+          <LogoMark />
           <span><strong>ARVEXO</strong> Radar</span>
         </a>
         <nav aria-label="Основная навигация">
@@ -115,7 +116,7 @@ export function Landing() {
 
       {menuOpen && <aside className="mobile-drawer" aria-label="Мобильное меню">
         <div className="drawer-top">
-          <span className="rp-brand"><img src="/assets/arvexo-mark-v5.png" alt="" /><span><strong>ARVEXO</strong> Radar</span></span>
+          <span className="rp-brand"><LogoMark /><span><strong>ARVEXO</strong> Radar</span></span>
           <button type="button" aria-label="Закрыть меню" onClick={() => setMenuOpen(false)}><X size={20} /></button>
         </div>
         {nav.map((item) => <a key={item.label} href={item.href} onClick={() => setMenuOpen(false)}>{item.label}<CaretDown size={17} /></a>)}
@@ -124,7 +125,7 @@ export function Landing() {
 
       <section className="rp-hero" id="top" aria-labelledby="hero-title">
         <div className="hero-brand" aria-hidden="true">
-          <img src="/assets/arvexo-mark-v5.png" alt="" />
+          <LogoMark />
           <span>ARVEXO Radar</span>
         </div>
         <h1 id="hero-title">Видьте эффект ИИ<br />в масштабе компании.</h1>
