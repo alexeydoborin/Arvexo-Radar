@@ -1,11 +1,11 @@
 "use client";
 
-/* eslint-disable @next/next/no-img-element -- decorative marketing images served from /public */
 import {
   ArrowRight, ArrowsOutCardinal, ArrowUpRight, BracketsCurly, CaretDown, CaretLeft, CaretRight,
   CirclesFour, Command, Cube, Desktop, List, Moon, Sparkle, Sun, X,
 } from "@phosphor-icons/react";
 import { Manrope } from "next/font/google";
+import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState, type ReactNode } from "react";
 import { LogoMark } from "@/components/LogoMark";
@@ -22,17 +22,17 @@ const nav = [
   { label: "Ресурсы", href: "#ресурсы", menu: true },
 ];
 
-const products: { title: string; description: string; image: string; tone: string; catalog?: boolean }[] = [
-  { title: "Обзор Radar", description: "Единая картина использования ИИ — от запросов до экономии времени.", image: "/assets/radar-overview.png", tone: "image-light" },
-  { title: "ROI и стоимость", description: "Свяжите затраты, внедрение и измеримый эффект в одном контуре.", image: "/assets/radar-roi.png", tone: "image-dark" },
-  { title: "Knowledge Discovery", description: "Находите сильные сценарии и превращайте их в практики компании.", image: "/assets/radar-practices.png", tone: "image-light" },
-  { title: "AI Best Practices", description: "Проверяйте, публикуйте и масштабируйте подтверждённые способы работы.", image: "/assets/radar-overview.png", tone: "image-light", catalog: true },
+const products: { title: string; description: string; image: string; alt: string; tone: string; catalog?: boolean }[] = [
+  { title: "Обзор Radar", description: "Единая картина использования ИИ — от запросов до экономии времени.", image: "/assets/radar-overview.png", tone: "image-light", alt: "Дашборд Arvexo Radar: обзор использования ИИ, запросов и сэкономленного времени" },
+  { title: "ROI и стоимость", description: "Свяжите затраты, внедрение и измеримый эффект в одном контуре.", image: "/assets/radar-roi.png", tone: "image-dark", alt: "Экран Arvexo Radar с расчётом ROI и стоимости внедрения ИИ" },
+  { title: "Knowledge Discovery", description: "Находите сильные сценарии и превращайте их в практики компании.", image: "/assets/radar-practices.png", tone: "image-light", alt: "Экран Arvexo Radar с найденными сценариями и лучшими практиками использования ИИ" },
+  { title: "AI Best Practices", description: "Проверяйте, публикуйте и масштабируйте подтверждённые способы работы.", image: "/assets/radar-overview.png", tone: "image-light", alt: "Каталог проверенных практик внедрения ИИ в Arvexo Radar", catalog: true },
 ];
 
 const cases = [
-  { name: "Финансы", title: "Проверенные сценарии для финансовой функции", metric: "+146 ч", image: "/assets/radar-roi.png" },
-  { name: "Операции", title: "Карта повторяющихся сценариев и узких мест", metric: "84%", image: "/assets/radar-practices.png" },
-  { name: "Продукт", title: "Видимость использования AI-инструментов", metric: "12 480", image: "/assets/radar-overview.png" },
+  { name: "Финансы", title: "Проверенные сценарии для финансовой функции", metric: "+146 ч", image: "/assets/radar-roi.png", alt: "Экран Radar с ROI и экономией часов для финансовой функции" },
+  { name: "Операции", title: "Карта повторяющихся сценариев и узких мест", metric: "84%", image: "/assets/radar-practices.png", alt: "Экран Radar с картой повторяющихся сценариев и узких мест" },
+  { name: "Продукт", title: "Видимость использования AI-инструментов", metric: "12 480", image: "/assets/radar-overview.png", alt: "Экран Radar с обзором использования ИИ-инструментов продуктовой командой" },
 ];
 
 const ECOSYSTEM = "https://arvexo.ru";
@@ -123,6 +123,7 @@ export function Landing({ research }: { research?: ReactNode }) {
           <span>ARVEXO Radar</span>
         </div>
         <h1 id="hero-title">Видьте эффект ИИ<br />в масштабе компании.</h1>
+        <p className="hero-sub">Аналитика промптов и эффективности ИИ: классификация запросов, ROI и лучшие практики.</p>
         <div className="rp-hero-actions">
           <Link className="primary-action" href="/auth/login"><Desktop size={18} weight="regular" />Открыть Radar</Link>
           <a className="secondary-action" href="#сценарии">Посмотреть сценарии</a>
@@ -131,18 +132,37 @@ export function Landing({ research }: { research?: ReactNode }) {
 
       <div className="icon-rail" aria-hidden="true"><span><Sparkle /></span><span><Command /></span><span><CirclesFour /></span><span><Sparkle /></span><span><ArrowsOutCardinal /></span><span><BracketsCurly /></span><span><Cube /></span><span><Sparkle /></span></div>
 
+      <section className="about-section" id="о-radar">
+        <div className="section-label">Что такое Arvexo Radar</div>
+        <h2>Аналитика промптов и эффективности ИИ для компаний</h2>
+        <p>Arvexo Radar — сервис аналитики запросов к ИИ-агентам. Он классифицирует промпты по сценариям, показывает, где ИИ действительно экономит время, и связывает затраты на внедрение с измеримым эффектом — ROI.</p>
+        <ul>
+          <li><b>Классификация запросов.</b> Автоматически группирует промпты сотрудников по задачам и функциям компании.</li>
+          <li><b>Оценка эффективности и ROI.</b> Считает сэкономленное время, стоимость использования и окупаемость ИИ-инструментов.</li>
+          <li><b>Поиск устойчивых сценариев.</b> Находит повторяющиеся практики, которые стабильно дают результат.</li>
+          <li><b>Лучшие практики внедрения.</b> Позволяет проверить, опубликовать и масштабировать рабочие способы использования ИИ на всю компанию.</li>
+        </ul>
+      </section>
+
       <section className="platform-section" id="платформа">
         <div className="section-label">Платформа Radar</div>
         {products.map((product) => <article className="product-row" key={product.title}>
           <div className="product-copy"><h2>{product.title}</h2><p>{product.description}</p>{product.catalog && <Link className="secondary-action" href="/app">Открыть каталог</Link>}</div>
-          <img className={`product-image ${product.tone}`} src={product.image} alt="" />
+          <Image
+            className={`product-image ${product.tone}`}
+            src={product.image}
+            alt={product.alt}
+            width={1536}
+            height={1024}
+            sizes="(max-width: 760px) 100vw, 50vw"
+          />
         </article>)}
       </section>
 
       <section className="cases-section" id="сценарии">
         <div className="two-col-heading"><h2>Создан для команд,<br />которые внедряют ИИ</h2><p>Radar помогает увидеть реальный эффект, сравнить сценарии и безопасно передать работающие практики всей компании.</p></div>
         <div className="case-gallery">
-          {cases.map((item, index) => <button key={item.name} className={index === caseIndex ? "case-card active" : "case-card"} type="button" onClick={() => setCaseIndex(index)}><img src={item.image} alt="" /><span>{item.name}</span></button>)}
+          {cases.map((item, index) => <button key={item.name} className={index === caseIndex ? "case-card active" : "case-card"} type="button" onClick={() => setCaseIndex(index)}><Image src={item.image} alt={item.alt} width={1536} height={1024} sizes="(max-width: 760px) 90vw, 33vw" /><span>{item.name}</span></button>)}
         </div>
         <div className="case-detail">
           <div><b>{activeCase.name}</b><p>{activeCase.title}</p><Link href="/app">Смотреть кейс <ArrowRight size={16} /></Link></div>

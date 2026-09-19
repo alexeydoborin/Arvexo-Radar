@@ -8,6 +8,5 @@ export default function robots(): MetadataRoute.Robots {
       disallow: "/app",
     },
     sitemap: "https://radar.arvexo.ru/sitemap.xml",
-    host: "https://radar.arvexo.ru",
   };
 }

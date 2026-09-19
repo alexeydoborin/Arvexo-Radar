@@ -10,14 +10,6 @@ export const metadata: Metadata = {
   description:
     "Arvexo Radar анализирует промпты и запросы к ИИ-агентам: классифицирует сценарии, измеряет эффективность, ROI и формирует лучшие практики внедрения AI.",
   applicationName: "Arvexo Radar",
-  keywords: [
-    "аналитика промптов",
-    "аналитика ИИ-агентов",
-    "эффективность искусственного интеллекта",
-    "ROI ИИ",
-    "классификация запросов",
-    "AI analytics",
-  ],
   authors: [{ name: "Arvexo", url: "https://arvexo.ru" }],
   creator: "Arvexo",
   publisher: "Arvexo",
@@ -45,7 +37,7 @@ export const metadata: Metadata = {
       "Классификация запросов к ИИ-агентам, карта сценариев, оценка ROI и лучшие практики внедрения AI.",
   },
   twitter: {
-    card: "summary",
+    card: "summary_large_image",
     title: "Arvexo Radar — аналитика промптов и эффективности ИИ",
     description:
       "Классификация запросов к ИИ-агентам, карта сценариев, оценка ROI и лучшие практики внедрения AI.",

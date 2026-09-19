@@ -1,5 +1,9 @@
 import { Landing } from "../components/Landing";
 import { ResearchSection } from "../components/ResearchSection";
+import { languageAlternates } from "../lib/i18n";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = { alternates: { canonical: "/", ...languageAlternates() } };
 
 const webApplicationSchema = {
   "@context": "https://schema.org",

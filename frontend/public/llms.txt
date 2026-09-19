@@ -1,0 +1,17 @@
+# Arvexo Radar
+
+> Arvexo Radar is a service for analyzing prompts sent to AI agents. It classifies use cases, measures effectiveness and ROI, and turns proven scenarios into company-wide best practices.
+
+Arvexo Radar (Russian: «Аналитика промптов и эффективности ИИ») is part of the Arvexo AI ecosystem: https://arvexo.ru
+
+## Capabilities
+
+- Classification of requests to AI agents by scenario and business function
+- Discovery of repeatable, high-value usage scenarios
+- Effectiveness, time-saved and ROI measurement
+- Verified AI best practices that can be published and scaled
+
+## Pages
+
+- [Arvexo Radar landing (Russian)](https://radar.arvexo.ru/): product overview, platform, scenarios
+- [Arvexo research](https://arvexo.ru/ru/research): latest research notes from the Arvexo team
