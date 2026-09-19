@@ -1,4 +1,5 @@
 import { Landing } from "../components/Landing";
+import { ResearchSection } from "../components/ResearchSection";
 
 const webApplicationSchema = {
   "@context": "https://schema.org",
@@ -32,7 +33,7 @@ export default function HomePage() {
           __html: JSON.stringify(webApplicationSchema).replace(/</g, "\\u003c"),
         }}
       />
-      <Landing />
+      <Landing research={<ResearchSection />} />
     </>
   );
 }

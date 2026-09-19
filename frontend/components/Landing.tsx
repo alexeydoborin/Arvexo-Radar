@@ -7,7 +7,7 @@ import {
 } from "@phosphor-icons/react";
 import { Manrope } from "next/font/google";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { LogoMark } from "@/components/LogoMark";
 import { ParticleField } from "@/components/ParticleField";
 import "../app/landing.css";
@@ -35,19 +35,13 @@ const cases = [
   { name: "Продукт", title: "Видимость использования AI-инструментов", metric: "12 480", image: "/assets/radar-overview.png" },
 ];
 
-const insights = [
-  { title: "Какие AI-сценарии дают эффект", type: "Исследование", image: "/assets/radar-practices.png" },
-  { title: "Как считать ROI без ложной точности", type: "Методика", image: "/assets/radar-roi.png" },
-  { title: "Паттерны внедрения в командах", type: "Практики", image: "/assets/radar-overview.png" },
-];
-
 const ECOSYSTEM = "https://arvexo.ru";
 const COOKIE_KEY = "radar-cookies-accepted";
 const THEME_KEY = "radar-theme";
 
 type Theme = "light" | "dark";
 
-export function Landing() {
+export function Landing({ research }: { research?: ReactNode }) {
   const [cookieVisible, setCookieVisible] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [caseIndex, setCaseIndex] = useState(0);
@@ -171,12 +165,7 @@ export function Landing() {
         </article>
       </section>
 
-      <section className="insights-section" id="ресурсы">
-        <div className="insights-heading"><h2>Новые исследования</h2><a className="secondary-action" href={ECOSYSTEM}>Все материалы</a></div>
-        <div className="insights-grid">
-          {insights.map((item) => <article className="rp-insight-card" key={item.title}><img src={item.image} alt="" /><span>{item.type}</span><h3>{item.title}</h3><a href={ECOSYSTEM}>Читать <ArrowRight size={15} /></a></article>)}
-        </div>
-      </section>
+      {research}
 
       <section className="final-cta" id="методика">
         <ParticleField mode="main" theme="dark" />
