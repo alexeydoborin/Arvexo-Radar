@@ -247,8 +247,8 @@ jobs:
             # instead of turning that expected handover into a failed CD run.
             public_ready=false
             for i in $(seq 1 20); do
-              if curl -fsS "${origin}/" | grep -q "From monitoring" \
-                 && curl -fsS "${origin}/images/arvexo-architecture.png" >/dev/null \
+              if curl -fsS "${origin}/" | grep -q "Видьте эффект ИИ" \
+                 && curl -fsS "${origin}/assets/radar-overview.png" >/dev/null \
                  && curl -fsS "${origin}/images/prompt-radar.png" >/dev/null; then
                 public_ready=true
                 echo "Public landing healthy after ${i} attempt(s)."

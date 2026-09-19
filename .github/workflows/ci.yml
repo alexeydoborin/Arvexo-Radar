@@ -144,7 +144,7 @@ jobs:
           docker run -d --rm --name radar-web-ci -p 127.0.0.1:39090:3000 arvexo-radar-web:ci
           trap 'docker stop radar-web-ci' EXIT
           for i in $(seq 1 20); do
-            if curl -fsS http://127.0.0.1:39090/ | grep -q "From monitoring"; then
+            if curl -fsS http://127.0.0.1:39090/ | grep -q "Видьте эффект ИИ"; then
               break
             fi
             if [ "$i" = 20 ]; then
@@ -153,5 +153,5 @@ jobs:
             fi
             sleep 1
           done
-          curl -fsS http://127.0.0.1:39090/images/arvexo-architecture.png >/dev/null
+          curl -fsS http://127.0.0.1:39090/assets/radar-overview.png >/dev/null
           test "$(curl -sS -o /dev/null -w '%{http_code}' http://127.0.0.1:39090/app)" = "307"
