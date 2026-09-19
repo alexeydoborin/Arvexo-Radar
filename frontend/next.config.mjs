@@ -3,8 +3,12 @@ const isProduction = process.env.NODE_ENV === "production";
 // Production keeps the strict policy (the API is same-origin behind nginx).
 // `next dev` needs eval for React refresh, and the local API lives on another
 // origin (localhost:8000), so relax only those two directives outside production.
-const scriptSrc = isProduction ? "'self' 'unsafe-inline'" : "'self' 'unsafe-inline' 'unsafe-eval'";
-const connectSrc = isProduction ? "'self'" : "'self' http://localhost:8000";
+const scriptSrc = isProduction
+  ? "'self' 'unsafe-inline' https://mc.yandex.ru"
+  : "'self' 'unsafe-inline' 'unsafe-eval' https://mc.yandex.ru";
+const connectSrc = isProduction
+  ? "'self' https://mc.yandex.ru"
+  : "'self' http://localhost:8000 https://mc.yandex.ru";
 const contentSecurityPolicy = [
   "default-src 'self'",
   "base-uri 'self'",
@@ -12,7 +16,7 @@ const contentSecurityPolicy = [
   "font-src 'self' data:",
   "form-action 'self'",
   "frame-ancestors 'none'",
-  "img-src 'self' data: blob:",
+  "img-src 'self' data: blob: https://mc.yandex.ru",
   "object-src 'none'",
   `script-src ${scriptSrc}`,
   "style-src 'self' 'unsafe-inline'",
