@@ -3,7 +3,7 @@
 /* eslint-disable @next/next/no-img-element -- decorative marketing images served from /public */
 import {
   ArrowRight, ArrowsOutCardinal, ArrowUpRight, BracketsCurly, CaretDown, CaretLeft, CaretRight,
-  CirclesFour, Command, Cube, Desktop, List, Moon, Play, Sparkle, Sun, X,
+  CirclesFour, Command, Cube, Desktop, List, Moon, Sparkle, Sun, X,
 } from "@phosphor-icons/react";
 import { Manrope } from "next/font/google";
 import Link from "next/link";
@@ -133,10 +133,6 @@ export function Landing() {
           <Link className="primary-action" href="/auth/login"><Desktop size={18} weight="regular" />Открыть Radar</Link>
           <a className="secondary-action" href="#сценарии">Посмотреть сценарии</a>
         </div>
-      </section>
-
-      <section className="intro-film" aria-label="Короткое введение Radar">
-        <div className="film-content"><Link href="/app"><Play size={18} weight="fill" />Смотреть демо</Link></div>
       </section>
 
       <div className="icon-rail" aria-hidden="true"><span><Sparkle /></span><span><Command /></span><span><CirclesFour /></span><span><Sparkle /></span><span><ArrowsOutCardinal /></span><span><BracketsCurly /></span><span><Cube /></span><span><Sparkle /></span></div>

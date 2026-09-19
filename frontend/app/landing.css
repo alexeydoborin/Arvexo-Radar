@@ -41,9 +41,6 @@
 .radar-page .cookie-bar button { border: 0; border-radius: 999px; padding: 10px 22px; background: #2478ed; color: #fff; font: inherit; font-weight: 700; cursor: pointer; }
 .radar-page .rp-toast { position: fixed; left: 50%; bottom: 82px; z-index: 5; transform: translateX(-50%); border-radius: 999px; padding: 11px 17px; background: #111217; color: #fff; font-size: 14px; box-shadow: 0 12px 32px rgba(0,0,0,.16); }
 .radar-page .mobile-menu, .radar-page .mobile-drawer { display: none; }
-.radar-page .intro-film { position: relative; z-index: 1; margin: 0 1vw; height: min(54vw, 720px); overflow: hidden; border-radius: 34px; background: #050609 url('/assets/radar-final-cta.png') center / cover; }
-.radar-page .film-content { display: grid; place-items: center; height: 100%; background: rgba(0,0,0,.5); }
-.radar-page .film-content button, .radar-page .film-content > a, .radar-page .film-content div > a { display: inline-flex; align-items: center; gap: 10px; border: 0; border-radius: 999px; padding: 16px 24px; background: #fff; color: #14151a; font: 700 16px inherit; cursor: pointer; }
 .radar-page .icon-rail { position: relative; z-index: 1; display: flex; justify-content: space-around; gap: 22px; overflow: hidden; padding: 74px 2vw; color: #16171b; }
 .radar-page .icon-rail span { display: grid; flex: 0 0 auto; place-items: center; width: 92px; height: 92px; border: 1px solid #e7e8ed; border-radius: 50%; background: #fafafb; }
 .radar-page .icon-rail svg { width: 30px; height: 30px; }
@@ -121,7 +118,6 @@
 .radar-page .drawer-top button { display: grid; place-items: center; width: 42px; height: 42px; border: 0; border-radius: 50%; background: #111217; color: #fff; }
 .radar-page .mobile-drawer > a { display: flex; align-items: center; justify-content: space-between; padding: 26px 22px; border-bottom: 1px solid #e8e8ec; color: #17181d; text-decoration: none; font-size: 19px; font-weight: 600; }
 .radar-page .mobile-drawer > .secondary-action { align-self: center; margin-top: 52px; }
-.radar-page .intro-film { height: 380px; margin: 0 8px; border-radius: 22px; }
 .radar-page .icon-rail { gap: 13px; padding: 44px 0; }
 .radar-page .icon-rail span { width: 56px; height: 56px; }
 .radar-page .icon-rail svg { width: 21px; height: 21px; }
@@ -171,8 +167,6 @@
 .radar-page .final-cta > .final-content { align-items: center; text-align: center; padding: 0 5vw; }
 .radar-page .final-cta h2 { max-width: 900px; }
 .radar-page .final-cta p { margin-left: auto; margin-right: auto; }
-.radar-page .film-content a, .radar-page .case-detail a, .radar-page .rp-insight-card a, .radar-page .final-content > a { text-decoration: none; }
-.radar-page .film-content a { color: #14151a; }
 .radar-page .case-detail a, .radar-page .rp-insight-card a { color: inherit; }
 .radar-page .final-content > a { color: #14151a; }
 .radar-page a.primary-action, .radar-page a.secondary-action { text-decoration: none; }
