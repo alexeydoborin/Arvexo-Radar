@@ -7,7 +7,7 @@ import {
 } from "@phosphor-icons/react";
 import { Manrope } from "next/font/google";
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ParticleField } from "@/components/ParticleField";
 import "../app/landing.css";
 
@@ -41,13 +41,31 @@ const insights = [
 ];
 
 const ECOSYSTEM = "https://arvexo.ru";
+const COOKIE_KEY = "radar-cookies-accepted";
 
 export function Landing() {
-  const [cookieVisible, setCookieVisible] = useState(true);
+  const [cookieVisible, setCookieVisible] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [caseIndex, setCaseIndex] = useState(0);
   const [audienceHover, setAudienceHover] = useState<"team" | "company" | null>(null);
   const activeCase = cases[caseIndex];
+
+  useEffect(() => {
+    try {
+      if (window.localStorage.getItem(COOKIE_KEY) !== "1") setCookieVisible(true);
+    } catch {
+      setCookieVisible(true);
+    }
+  }, []);
+
+  const acceptCookies = () => {
+    setCookieVisible(false);
+    try {
+      window.localStorage.setItem(COOKIE_KEY, "1");
+    } catch {
+      /* storage unavailable: the notice just shows again next visit */
+    }
+  };
 
   return (
     <main className={`radar-page ${manrope.className}`}>
@@ -149,7 +167,7 @@ export function Landing() {
 
       {cookieVisible && <div className="cookie-bar" role="status">
         <p>Radar использует cookies для улучшения сервиса и анализа использования.</p>
-        <button type="button" onClick={() => setCookieVisible(false)}>Понятно</button>
+        <button type="button" onClick={acceptCookies}>Понятно</button>
       </div>}
     </main>
   );

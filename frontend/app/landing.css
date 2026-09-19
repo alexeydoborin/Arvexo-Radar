@@ -180,3 +180,8 @@
   .radar-page .icon-rail { flex-wrap: wrap; justify-content: center; padding: 44px 16px; }
   .radar-page .footer-word { padding-inline: 0; overflow: hidden; }
 }
+.radar-page .cookie-bar { position: fixed; right: auto; bottom: 20px; left: 20px; z-index: 50; display: flex; flex-direction: column; align-items: flex-start; gap: 14px; width: min(400px, calc(100vw - 40px)); min-height: 0; padding: 20px; border: 1px solid #e7e7eb; border-radius: 18px; background: #fff; box-shadow: 0 18px 48px rgba(16,17,22,.16); font-size: 14px; line-height: 1.5; }
+.radar-page .cookie-bar button { padding: 10px 20px; font-size: 14px; }
+@media (max-width: 780px) {
+  .radar-page .cookie-bar { right: 12px; bottom: 12px; left: 12px; width: auto; padding: 16px; font-size: 13px; }
+}
