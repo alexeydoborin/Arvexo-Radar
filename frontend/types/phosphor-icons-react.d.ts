@@ -44,5 +44,14 @@ declare module "@phosphor-icons/react" {
   export const UsersThree: IconComponent;
   export const WarningCircle: IconComponent;
   export const Wrench: IconComponent;
+  export const ArrowsOutCardinal: IconComponent;
+  export const ArrowUpRight: IconComponent;
+  export const BracketsCurly: IconComponent;
+  export const CaretLeft: IconComponent;
+  export const CirclesFour: IconComponent;
+  export const Command: IconComponent;
+  export const Cube: IconComponent;
+  export const Desktop: IconComponent;
+  export const Play: IconComponent;
   export const X: IconComponent;
 }

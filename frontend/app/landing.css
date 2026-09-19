@@ -1,0 +1,178 @@
+/* Arvexo Radar landing. Every rule is scoped under .radar-page so it cannot leak into the app. */
+.radar-page *, .radar-page *::before, .radar-page *::after { box-sizing: border-box; }
+.radar-page {
+  color: #111217;
+  -webkit-font-smoothing: antialiased;
+  min-height: 100svh;
+  overflow: hidden;
+  position: relative;
+  background: #fff;
+}
+.radar-page .site-header, .radar-page .rp-hero, .radar-page .cookie-bar { position: relative; z-index: 1; }
+.radar-page .site-header {
+  height: 72px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  max-width: 1600px;
+  padding: 0 7.75vw;
+  margin: 0 auto;
+}
+.radar-page .rp-brand, .radar-page .hero-brand, .radar-page .site-header nav a, .radar-page .login, .radar-page .rp-hero-actions a { text-decoration: none; color: inherit; }
+.radar-page .rp-brand, .radar-page .hero-brand { display: inline-flex; align-items: center; gap: 9px; letter-spacing: -.04em; }
+.radar-page .rp-brand { font-size: 19px; white-space: nowrap; }
+.radar-page .rp-brand img { width: 22px; height: 22px; object-fit: contain; filter: brightness(0); }
+.radar-page .rp-brand strong { font-weight: 800; }
+.radar-page .site-header nav { display: flex; align-items: center; gap: clamp(22px, 3vw, 52px); margin-left: 6vw; }
+.radar-page .site-header nav a { display: inline-flex; align-items: center; gap: 7px; font-size: 14px; font-weight: 500; color: #41434b; }
+.radar-page .login { display: inline-flex; gap: 7px; align-items: center; border-radius: 999px; background: #101116; color: #fff; padding: 10px 16px 10px 18px; font-size: 14px; font-weight: 700; }
+.radar-page .rp-hero { min-height: calc(100svh - 135px); display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 46px 24px 112px; text-align: center; }
+.radar-page .hero-brand { font-size: 25px; margin-bottom: 42px; }
+.radar-page .hero-brand img { width: 27px; height: 27px; object-fit: contain; filter: brightness(0); }
+.radar-page .rp-hero h1 { margin: 0; max-width: 1160px; font-size: clamp(50px, 7.15vw, 138px); line-height: .97; letter-spacing: -.075em; font-weight: 500; }
+.radar-page .rp-hero-actions { display: flex; align-items: center; justify-content: center; gap: 14px; margin-top: 66px; }
+.radar-page .primary-action, .radar-page .secondary-action { display: inline-flex; align-items: center; justify-content: center; gap: 9px; border-radius: 999px; border: 0; padding: 14px 23px; font-family: inherit; font-size: 16px; font-weight: 700; cursor: pointer; transition: transform .2s ease, background .2s ease; }
+.radar-page .primary-action { background: #101116; color: white !important; }
+.radar-page .secondary-action { background: #f8f8fa; border: 1px solid #e4e5ea; color: #15161b !important; }
+.radar-page .rp-hero-actions button:hover, .radar-page .login:hover { transform: translateY(-2px); }
+.radar-page .cookie-bar { min-height: 63px; display: flex; align-items: center; justify-content: space-between; gap: 20px; border-top: 1px solid #e7e7eb; padding: 10px 20px; background: rgba(255,255,255,.94); font-size: 14px; color: #5d6069; }
+.radar-page .cookie-bar p { margin: 0; }
+.radar-page .cookie-bar a { color: #1268e8; }
+.radar-page .cookie-bar button { border: 0; border-radius: 999px; padding: 10px 22px; background: #2478ed; color: #fff; font: inherit; font-weight: 700; cursor: pointer; }
+.radar-page .rp-toast { position: fixed; left: 50%; bottom: 82px; z-index: 5; transform: translateX(-50%); border-radius: 999px; padding: 11px 17px; background: #111217; color: #fff; font-size: 14px; box-shadow: 0 12px 32px rgba(0,0,0,.16); }
+.radar-page .mobile-menu, .radar-page .mobile-drawer { display: none; }
+.radar-page .intro-film { position: relative; z-index: 1; margin: 0 1vw; height: min(54vw, 720px); overflow: hidden; border-radius: 34px; background: #050609 url('/assets/radar-final-cta.png') center / cover; }
+.radar-page .film-content { display: grid; place-items: center; height: 100%; background: rgba(0,0,0,.5); }
+.radar-page .film-content button, .radar-page .film-content > a, .radar-page .film-content div > a { display: inline-flex; align-items: center; gap: 10px; border: 0; border-radius: 999px; padding: 16px 24px; background: #fff; color: #14151a; font: 700 16px inherit; cursor: pointer; }
+.radar-page .icon-rail { position: relative; z-index: 1; display: flex; justify-content: space-around; gap: 22px; overflow: hidden; padding: 74px 2vw; color: #16171b; }
+.radar-page .icon-rail span { display: grid; flex: 0 0 auto; place-items: center; width: 92px; height: 92px; border: 1px solid #e7e8ed; border-radius: 50%; background: #fafafb; }
+.radar-page .icon-rail svg { width: 30px; height: 30px; }
+.radar-page .platform-section { position: relative; z-index: 1; max-width: 1300px; margin: 0 auto; padding: 50px 5vw 100px; }
+.radar-page .section-label { margin-bottom: 80px; color: #858995; font-size: 14px; font-weight: 700; text-transform: uppercase; letter-spacing: .12em; }
+.radar-page .product-row { display: grid; grid-template-columns: .94fr 1.06fr; align-items: center; gap: 9vw; min-height: 660px; }
+.radar-page .product-row:nth-child(odd) .product-copy { order: 2; }
+.radar-page .product-row:nth-child(odd) .product-image { order: 1; }
+.radar-page .product-copy h2, .radar-page .two-col-heading h2, .radar-page .rp-audience-card h2, .radar-page .insights-heading h2, .radar-page .final-cta h2 { margin: 0; font-size: clamp(44px, 5vw, 78px); line-height: .98; letter-spacing: -.065em; font-weight: 500; }
+.radar-page .product-copy p { max-width: 410px; margin: 28px 0; color: #60636d; font-size: 19px; line-height: 1.45; }
+.radar-page .product-image { width: 100%; min-height: 420px; border-radius: 32px; object-fit: cover; }
+.radar-page .image-dark { background: #050609; }
+.radar-page .cases-section { position: relative; z-index: 1; padding: 120px 5vw; border-top: 1px solid #ececf0; }
+.radar-page .two-col-heading { display: grid; grid-template-columns: 1.1fr .65fr; gap: 12vw; max-width: 1300px; margin: 0 auto 68px; }
+.radar-page .two-col-heading p { margin: 0; color: #585b65; font-size: 18px; line-height: 1.45; }
+.radar-page .case-gallery { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(340px, .63fr); gap: 30px; overflow: hidden; max-width: 1500px; margin: auto; }
+.radar-page .case-card { position: relative; height: 440px; padding: 0; overflow: hidden; border: 0; border-radius: 30px; background: #0e0f15; text-align: left; cursor: pointer; }
+.radar-page .case-card img { width: 100%; height: 100%; object-fit: cover; opacity: .76; transition: transform .35s ease; }
+.radar-page .case-card span { position: absolute; left: 28px; bottom: 26px; color: white; font-size: 32px; letter-spacing: -.05em; }
+.radar-page .case-card.active img, .radar-page .case-card:hover img { transform: scale(1.04); opacity: 1; }
+.radar-page .case-detail { display: grid; grid-template-columns: 1fr auto auto; align-items: end; gap: 36px; max-width: 1300px; min-height: 260px; margin: auto; padding-top: 34px; }
+.radar-page .case-detail b { font-size: 20px; }
+.radar-page .case-detail p { max-width: 500px; margin: 8px 0 18px; color: #60636d; font-size: 18px; }
+.radar-page .case-detail button, .radar-page .case-detail > a, .radar-page .case-detail div > a { border: 0; background: transparent; display: inline-flex; gap: 8px; align-items: center; padding: 0; font: 700 15px inherit; cursor: pointer; }
+.radar-page .case-detail strong { color: #3159ff; font-size: clamp(44px, 6vw, 92px); letter-spacing: -.08em; }
+.radar-page .carousel-controls { display: flex; gap: 9px; }
+.radar-page .carousel-controls button { display: grid; place-items: center; width: 44px; height: 44px; border-radius: 50%; background: #f5f5f7; }
+.radar-page .audience-section { position: relative; z-index: 1; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); min-height: 720px; overflow: hidden; margin: 0 5vw; background: #fff; isolation: isolate; }
+.radar-page .rp-audience-card { position: relative; z-index: 1; display: grid; min-height: 720px; place-items: center; overflow: hidden; text-align: center; }
+.radar-page .rp-audience-content { position: relative; z-index: 2; display: flex; flex-direction: column; align-items: center; }
+.radar-page .rp-audience-card span { display: inline-block; margin-bottom: 26px; padding: 7px 11px; border: 1px solid #e3e4e8; border-radius: 4px; background: rgba(255,255,255,.8); font-size: 12px; font-weight: 700; }
+.radar-page .rp-audience-card h2 { font-size: clamp(44px, 4.1vw, 72px); color: #14151a; }
+.radar-page .rp-audience-card h2 em { color: #4f525a; font-style: normal; }
+.radar-page .rp-audience-card p { max-width: 330px; margin: 22px 0 30px; color: #5d6069; font-size: 17px; line-height: 1.45; }
+.radar-page .insights-section { position: relative; z-index: 1; padding: 120px 5vw; }
+.radar-page .insights-heading { display: flex; justify-content: space-between; align-items: center; max-width: 1300px; margin: auto auto 52px; }
+.radar-page .insights-heading h2 { font-size: clamp(40px, 4.5vw, 70px); }
+.radar-page .insights-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 28px; max-width: 1300px; margin: auto; }
+.radar-page .rp-insight-card { border-right: 1px solid #e8e8ec; padding-right: 28px; }
+.radar-page .rp-insight-card img { width: 100%; aspect-ratio: 1; border-radius: 22px; object-fit: cover; background: #101116; }
+.radar-page .rp-insight-card span { display: block; margin-top: 22px; color: #787b85; font-size: 13px; }
+.radar-page .rp-insight-card h3 { max-width: 370px; margin: 10px 0 20px; font-size: 27px; line-height: 1.1; letter-spacing: -.05em; font-weight: 500; }
+.radar-page .rp-insight-card button, .radar-page .rp-insight-card > a, .radar-page .rp-insight-card div > a { display: inline-flex; align-items: center; gap: 8px; border: 0; background: transparent; padding: 0; font: 700 14px inherit; cursor: pointer; }
+.radar-page .final-cta { position: relative; z-index: 1; background: #000; min-height: 610px; margin: 0 2vw 52px; overflow: hidden; border-radius: 34px; color: white; }
+.radar-page .final-cta > img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.radar-page .final-cta > .final-content { position: relative; z-index: 1; display: flex; height: 610px; flex-direction: column; align-items: flex-start; justify-content: center; padding: 9vw; }
+.radar-page .final-cta h2 { max-width: 730px; font-size: clamp(46px, 7vw, 112px); }
+.radar-page .final-cta p { max-width: 420px; font-size: 18px; line-height: 1.45; color: #d7dcf5; }
+.radar-page .final-cta button, .radar-page .final-cta > a, .radar-page .final-cta div > a { display: inline-flex; align-items: center; gap: 9px; margin-top: 18px; border: 0; border-radius: 999px; padding: 14px 20px; color: #14151a; background: #fff; font: 700 15px inherit; cursor: pointer; }
+.radar-page footer { position: relative; z-index: 1; overflow: hidden; padding: 52px 5vw 0; }
+.radar-page .footer-links { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 80px; min-height: 260px; }
+.radar-page .footer-links span { font-size: 26px; letter-spacing: -.05em; }
+.radar-page .footer-links p { color: #6d7079; }
+.radar-page .footer-links b { display: block; margin-bottom: 18px; color: #747782; font-size: 14px; }
+.radar-page .footer-links a { display: block; margin: 12px 0; color: #191a20; text-decoration: none; }
+.radar-page .footer-word { font-size: clamp(160px, 26vw, 500px); line-height: .72; letter-spacing: -.12em; font-weight: 700; }
+@media (max-width: 780px) {
+.radar-page .site-header { height: 64px; padding: 0 20px; }
+.radar-page .site-header nav { display: none; }
+.radar-page .rp-brand { font-size: 16px; }
+.radar-page .rp-brand img { width: 19px; height: 19px; }
+.radar-page .login { padding: 9px 13px; font-size: 13px; }
+.radar-page .rp-hero { min-height: calc(100svh - 130px); padding: 28px 18px 84px; }
+.radar-page .hero-brand { font-size: 18px; margin-bottom: 30px; }
+.radar-page .hero-brand img { width: 20px; height: 20px; }
+.radar-page .rp-hero h1 { font-size: clamp(45px, 14vw, 74px); letter-spacing: -.07em; }
+.radar-page .rp-hero-actions { margin-top: 42px; flex-wrap: wrap; }
+.radar-page .primary-action, .radar-page .secondary-action { font-size: 14px; padding: 13px 18px; }
+.radar-page .cookie-bar { font-size: 11px; padding: 9px 14px; }
+.radar-page .cookie-bar button { padding: 9px 13px; }
+.radar-page .site-header nav, .radar-page .site-header .login { display: none; }
+.radar-page .mobile-menu { display: grid; place-items: center; border: 0; border-radius: 50%; width: 42px; height: 42px; background: #111217; color: #fff; }
+.radar-page .mobile-drawer { position: fixed; inset: 0; z-index: 10; display: flex; flex-direction: column; background: #fff; }
+.radar-page .drawer-top { display: flex; height: 65px; align-items: center; justify-content: space-between; padding: 0 20px; border-bottom: 1px solid #e8e8ec; }
+.radar-page .drawer-top button { display: grid; place-items: center; width: 42px; height: 42px; border: 0; border-radius: 50%; background: #111217; color: #fff; }
+.radar-page .mobile-drawer > a { display: flex; align-items: center; justify-content: space-between; padding: 26px 22px; border-bottom: 1px solid #e8e8ec; color: #17181d; text-decoration: none; font-size: 19px; font-weight: 600; }
+.radar-page .mobile-drawer > .secondary-action { align-self: center; margin-top: 52px; }
+.radar-page .intro-film { height: 380px; margin: 0 8px; border-radius: 22px; }
+.radar-page .icon-rail { gap: 13px; padding: 44px 0; }
+.radar-page .icon-rail span { width: 56px; height: 56px; }
+.radar-page .icon-rail svg { width: 21px; height: 21px; }
+.radar-page .platform-section { padding: 35px 20px 60px; }
+.radar-page .section-label { margin-bottom: 34px; }
+.radar-page .product-row, .radar-page .product-row:nth-child(odd) { display: flex; min-height: auto; flex-direction: column; align-items: stretch; gap: 26px; margin-bottom: 70px; }
+.radar-page .product-row:nth-child(odd) .product-copy, .radar-page .product-row:nth-child(odd) .product-image { order: unset; }
+.radar-page .product-copy h2, .radar-page .two-col-heading h2, .radar-page .rp-audience-card h2 { font-size: 46px; }
+.radar-page .product-copy p { font-size: 17px; }
+.radar-page .product-image { min-height: 270px; border-radius: 22px; }
+.radar-page .cases-section { padding: 70px 20px; }
+.radar-page .two-col-heading { display: block; margin-bottom: 38px; }
+.radar-page .two-col-heading p { margin-top: 25px; font-size: 16px; }
+.radar-page .case-gallery { grid-auto-columns: 84vw; gap: 14px; }
+.radar-page .case-card { height: 330px; border-radius: 22px; }
+.radar-page .case-card span { font-size: 26px; }
+.radar-page .case-detail { grid-template-columns: 1fr auto; min-height: 210px; gap: 20px; }
+.radar-page .case-detail p { font-size: 16px; }
+.radar-page .case-detail strong { font-size: 48px; }
+.radar-page .carousel-controls { grid-column: 1 / -1; }
+.radar-page .audience-section { display: block; min-height: 0; margin: 0; }
+.radar-page .rp-audience-card { min-height: 510px; padding: 66px 20px; }
+.radar-page .rp-audience-card + .rp-audience-card { margin-top: 0; }
+.radar-page .rp-audience-card h2 { font-size: clamp(45px, 13vw, 64px); }
+.radar-page .rp-audience-card p { max-width: 290px; font-size: 16px; }
+.radar-page .insights-section { padding: 70px 20px; }
+.radar-page .insights-heading { align-items: flex-start; gap: 24px; }
+.radar-page .insights-heading h2 { font-size: 43px; }
+.radar-page .insights-heading .secondary-action { padding: 10px 14px; font-size: 12px; }
+.radar-page .insights-grid { display: flex; overflow-x: auto; gap: 18px; }
+.radar-page .rp-insight-card { min-width: 78vw; border-right: 0; padding-right: 0; }
+.radar-page .rp-insight-card h3 { font-size: 25px; }
+.radar-page .final-cta { min-height: 520px; margin: 0 8px 32px; border-radius: 22px; }
+.radar-page .final-cta > .final-content { height: 520px; padding: 34px; }
+.radar-page .final-cta h2 { font-size: 56px; }
+.radar-page .footer-links { grid-template-columns: 1fr 1fr; gap: 34px; min-height: auto; }
+.radar-page .footer-links > :first-child { grid-column: 1 / -1; }
+.radar-page .footer-word { margin-top: 80px; font-size: 46vw; }
+}
+.radar-page .rp-audience-card h2 { font-weight: 400; letter-spacing: -.055em; line-height: 1.02; }
+.radar-page .rp-audience-card span { background: rgba(255,255,255,.92); }
+@media (max-width: 760px) {
+.radar-page .audience-field { opacity: .8; }
+}
+.radar-page .hero-particles { position: absolute; top: 0; left: 0; width: 100%; height: 100svh; z-index: 0; pointer-events: none; }
+.radar-page .particle-container { position: absolute; inset: 0; z-index: 0; pointer-events: none; }
+.radar-page .final-cta > .final-content { align-items: center; text-align: center; padding: 0 5vw; }
+.radar-page .final-cta h2 { max-width: 900px; }
+.radar-page .final-cta p { margin-left: auto; margin-right: auto; }
+.radar-page .film-content a, .radar-page .case-detail a, .radar-page .rp-insight-card a, .radar-page .final-content > a { text-decoration: none; }
+.radar-page .film-content a { color: #14151a; }
+.radar-page .case-detail a, .radar-page .rp-insight-card a { color: inherit; }
+.radar-page .final-content > a { color: #14151a; }
+.radar-page a.primary-action, .radar-page a.secondary-action { text-decoration: none; }
