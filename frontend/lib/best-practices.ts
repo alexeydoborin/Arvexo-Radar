@@ -1,3 +1,5 @@
+import { apiFetch } from "./api";
+
 export type BestPracticeStatus =
   | "detected"
   | "under_review"
@@ -57,7 +59,7 @@ function apiRoot(): string {
 
 export async function fetchPractices(): Promise<{ items: BestPractice[]; error?: string }> {
   try {
-    const response = await fetch(`${apiRoot()}/best-practices`, { signal: AbortSignal.timeout(3500) });
+    const response = await apiFetch(`${apiRoot()}/best-practices`, { signal: AbortSignal.timeout(3500) });
     if (!response.ok) throw new Error(`Radar API вернул ошибку ${response.status}`);
     const payload = await response.json();
     return { items: payload.items };
@@ -70,7 +72,7 @@ export async function fetchPractices(): Promise<{ items: BestPractice[]; error?:
 
 export async function fetchPracticeTop(): Promise<BestPracticeTop | null> {
   try {
-    const response = await fetch(`${apiRoot()}/best-practices/top`, { signal: AbortSignal.timeout(3500) });
+    const response = await apiFetch(`${apiRoot()}/best-practices/top`, { signal: AbortSignal.timeout(3500) });
     if (!response.ok) throw new Error(`Radar API вернул ошибку ${response.status}`);
     return await response.json();
   } catch {
@@ -81,12 +83,12 @@ export async function fetchPracticeTop(): Promise<BestPracticeTop | null> {
 export async function recommendPractice(practice: BestPractice): Promise<BestPractice> {
   let current = practice;
   if (current.status !== "approved" && current.status !== "published") {
-    const approved = await fetch(`${apiRoot()}/best-practices/${practice.id}/approve`, { method: "POST" });
+    const approved = await apiFetch(`${apiRoot()}/best-practices/${practice.id}/approve`, { method: "POST" });
     if (!approved.ok) throw new Error("Не удалось согласовать практику");
     current = await approved.json();
   }
   if (current.status === "published") return current;
-  const published = await fetch(`${apiRoot()}/best-practices/${practice.id}/publish`, { method: "POST" });
+  const published = await apiFetch(`${apiRoot()}/best-practices/${practice.id}/publish`, { method: "POST" });
   if (!published.ok) throw new Error("Не удалось опубликовать практику");
   return await published.json();
 }

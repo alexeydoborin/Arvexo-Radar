@@ -1,3 +1,5 @@
+import { apiFetch } from "./api";
+
 export interface DatasetSummary {
   id: string;
   display_name: string;
@@ -52,17 +54,17 @@ export async function uploadDataset(file: File): Promise<DatasetSummary> {
   const form = new FormData();
   form.append("file", file);
   form.append("display_name", file.name);
-  const response = await fetch(`${apiV1Root()}/datasets`, { method: "POST", body: form });
+  const response = await apiFetch(`${apiV1Root()}/datasets`, { method: "POST", body: form });
   return unwrap<DatasetSummary>(response, "Не удалось загрузить датасет");
 }
 
 export async function getValidationSummary(datasetId: string): Promise<ValidationSummary> {
-  const response = await fetch(`${apiV1Root()}/datasets/${datasetId}/validation`);
+  const response = await apiFetch(`${apiV1Root()}/datasets/${datasetId}/validation`);
   return unwrap<ValidationSummary>(response, "Не удалось получить сводку валидации");
 }
 
 export async function createRun(datasetId: string): Promise<RunSummary> {
-  const response = await fetch(`${apiV1Root()}/datasets/${datasetId}/runs`, {
+  const response = await apiFetch(`${apiV1Root()}/datasets/${datasetId}/runs`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({}),
@@ -71,7 +73,7 @@ export async function createRun(datasetId: string): Promise<RunSummary> {
 }
 
 export async function getRun(runId: string): Promise<RunSummary> {
-  const response = await fetch(`${apiV1Root()}/runs/${runId}`);
+  const response = await apiFetch(`${apiV1Root()}/runs/${runId}`);
   return unwrap<RunSummary>(response, "Не удалось получить статус анализа");
 }
 

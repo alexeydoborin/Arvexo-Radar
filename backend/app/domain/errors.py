@@ -83,3 +83,8 @@ class BestPracticeNotFoundError(ArvexoError):
 class BestPracticeStateError(ArvexoError):
     code = "BEST_PRACTICE_INVALID_STATE"
     status = 409
+
+
+class AuthenticationRequiredError(ArvexoError):
+    code = "AUTHENTICATION_REQUIRED"
+    status = 401

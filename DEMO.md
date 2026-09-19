@@ -1,20 +1,29 @@
 # Demo
 
-Основной demo flow:
+**Версия:** v0.3.0 — Enterprise Effectiveness MVP
 
-1. открыть Arvexo Radar;
-2. загрузить CSV dataset;
-3. проверить mapping, validation и masked preview;
-4. запустить analysis run;
-5. показать фактический progress;
-6. открыть Executive Overview;
-7. исследовать categories и use cases;
-8. раскрыть representative samples и explainability;
-9. показать insights, recommendations, prompt health и security findings;
-10. продемонстрировать graceful degradation;
-11. сгенерировать и скачать PDF.
+Основной demo flow (≈ 9 минут):
 
-До появления реализации команды запуска не публикуются как рабочие. Полный narration, подготовка, fallback и запрещённые утверждения: [docs/19-demo-script.md](./docs/19-demo-script.md).
+1. открыть `radar.arvexo.ru` и войти через Arvexo Account;
+2. **Home** — что происходит с AI сегодня;
+3. **Analytics** — цепочка «использование → затраты A → экономия B → Net Benefit → ROI»;
+4. **Models** — какие агенты окупаются, а какой убыточен;
+5. **Monitoring** — подразделения: интерес против подтверждённого эффекта;
+6. **Incidents** и **Recommendations** — инсайты и каталог AI Best Practices с workflow публикации;
+7. **Settings** — методика: формулы, стоимость FTE, тарифы, нормативы сценариев;
+8. **Integrations** — какие источники факт, а какие моделируются;
+9. необязательно: загрузить свой CSV и показать анализ датасета.
+
+Данные demo — связный синтетический набор за июль 2026, везде помеченный как `demo`.
+
+Локальный запасной стенд без внешних ключей:
+
+```bash
+cp .env.example .env
+make up
+make seed
+```
+
+Полный сценарий, опорные цифры, запрещённые утверждения и известные слабые места: [docs/19-demo-script.md](./docs/19-demo-script.md).
 
 Ответы на ожидаемые вопросы жюри: [docs/20-judges-faq.md](./docs/20-judges-faq.md).
-

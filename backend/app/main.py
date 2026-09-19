@@ -1,6 +1,7 @@
-from fastapi import FastAPI, Request
+from fastapi import Depends, FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 
+from app.api.auth import require_session
 from app.api.error_handlers import arvexo_error_handler, unhandled_error_handler
 from app.api.routers import (
     analytics,
@@ -43,11 +44,13 @@ app.add_middleware(
 app.add_exception_handler(ArvexoError, arvexo_error_handler)
 app.add_exception_handler(Exception, unhandled_error_handler)
 
+protected = [Depends(require_session)]
+
 app.include_router(system.router, prefix="/api/v1")
-app.include_router(datasets.router, prefix="/api/v1")
-app.include_router(runs.router, prefix="/api/v1")
-app.include_router(reports.router, prefix="/api/v1")
-app.include_router(best_practices.router, prefix="/api")
+app.include_router(datasets.router, prefix="/api/v1", dependencies=protected)
+app.include_router(runs.router, prefix="/api/v1", dependencies=protected)
+app.include_router(reports.router, prefix="/api/v1", dependencies=protected)
+app.include_router(best_practices.router, prefix="/api", dependencies=protected)
 app.include_router(proxy.router)
-app.include_router(analytics.router, prefix="/api/analytics")
-app.include_router(methodology.router, prefix="/api")
+app.include_router(analytics.router, prefix="/api/analytics", dependencies=protected)
+app.include_router(methodology.router, prefix="/api", dependencies=protected)

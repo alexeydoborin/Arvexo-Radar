@@ -870,9 +870,11 @@ function DatasetInsightsView({ overview, onRequestUpload }: { overview: RunOverv
 }
 
 function WelcomeScreen({
+  user,
   onChooseDemo,
   onChooseUpload,
 }: {
+  user: { email: string; name: string | null };
   onChooseDemo: () => void;
   onChooseUpload: () => void;
 }) {
@@ -885,6 +887,7 @@ function WelcomeScreen({
           Классифицирует запросы пользователей к ИИ-агенту, находит устойчивые сценарии
           использования и показывает, где агент реально экономит время, а где ломается.
         </p>
+        <p className="welcome-account">Вы вошли как {user.name || user.email}. Оба режима доступны только зарегистрированным пользователям Arvexo Account.</p>
         <div className="welcome-options">
           <button type="button" className="welcome-option" onClick={onChooseUpload}>
             <span className="welcome-option-icon"><Database size={22} /></span>
@@ -930,7 +933,7 @@ function WelcomeScreen({
 
 export function RadarDashboard({ user }: { user: { email: string; name: string | null } }) {
   const queryClient = useQueryClient();
-  const [mode, setMode] = useState<"choose" | "demo" | "real">("demo");
+  const [mode, setMode] = useState<"choose" | "demo" | "real">("choose");
   const [view, setView] = useState<View>("overview");
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [filtersOpen, setFiltersOpen] = useState(false);
@@ -1027,7 +1030,7 @@ export function RadarDashboard({ user }: { user: { email: string; name: string |
   };
 
   if (mode === "choose") {
-    return <div className="radar-app"><WelcomeScreen onChooseDemo={() => { setCurrentRun(null); setMode("demo"); navigate("overview"); }} onChooseUpload={openUpload} /></div>;
+    return <div className="radar-app"><WelcomeScreen user={user} onChooseDemo={() => { setCurrentRun(null); setMode("demo"); navigate("overview"); }} onChooseUpload={openUpload} /></div>;
   }
 
   return <div className="app-shell radar-app">

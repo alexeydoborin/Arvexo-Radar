@@ -1,3 +1,4 @@
+import { apiFetch } from "./api";
 import { apiV1Root } from "./datasets";
 
 export interface CategorySummary {
@@ -112,7 +113,7 @@ export interface RunOverview {
 
 export async function fetchRunOverview(runId: string): Promise<RunOverview | null> {
   try {
-    const response = await fetch(`${apiV1Root()}/runs/${runId}/overview`);
+    const response = await apiFetch(`${apiV1Root()}/runs/${runId}/overview`);
     if (!response.ok) return null;
     return (await response.json()) as RunOverview;
   } catch {
@@ -125,7 +126,7 @@ export async function fetchScenarioDetail(
   scenarioId: string,
 ): Promise<ScenarioDetail | null> {
   try {
-    const response = await fetch(`${apiV1Root()}/runs/${runId}/scenarios/${scenarioId}`);
+    const response = await apiFetch(`${apiV1Root()}/runs/${runId}/scenarios/${scenarioId}`);
     if (!response.ok) return null;
     return (await response.json()) as ScenarioDetail;
   } catch {

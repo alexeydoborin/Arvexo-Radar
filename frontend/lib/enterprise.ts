@@ -1,3 +1,5 @@
+import { apiFetch } from "./api";
+
 export type DataStatus = "actual" | "estimate" | "mixed" | "demo";
 
 export interface KpiValue {
@@ -101,7 +103,7 @@ export interface DataResult<T> {
 
 async function request<T>(path: string, init?: RequestInit): Promise<DataResult<T>> {
   try {
-    const response = await fetch(`${apiRoot()}${path}`, { ...init, signal: AbortSignal.timeout(4000), headers: { "Content-Type": "application/json", ...(init?.headers ?? {}) } });
+    const response = await apiFetch(`${apiRoot()}${path}`, { ...init, signal: AbortSignal.timeout(4000), headers: { "Content-Type": "application/json", ...(init?.headers ?? {}) } });
     if (!response.ok) throw new Error(`Radar API вернул ошибку ${response.status}`);
     return { data: await response.json() as T, demo: false };
   } catch (caught) {

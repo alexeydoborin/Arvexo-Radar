@@ -599,6 +599,7 @@ h1, h2, h3, p, dl, dd { margin-top: 0; }
 .welcome-option-body strong { font-size: 13.5px; font-weight: 650; }
 .welcome-option-body span { color: var(--text-tertiary); font-size: 11px; line-height: 1.45; }
 .welcome-option-arrow { flex: 0 0 auto; color: var(--text-tertiary); }
+.welcome-account { margin: 0 0 16px; font-size: 13px; color: var(--text-tertiary); }
 .welcome-details { margin-top: 24px; padding-top: 22px; border-top: 1px solid var(--border); text-align: left; }
 .welcome-details h2 { margin: 0 0 12px; font-size: 14px; font-weight: 680; letter-spacing: -.01em; }
 .welcome-details ul { display: grid; gap: 10px; margin: 0; padding: 0; list-style: none; }

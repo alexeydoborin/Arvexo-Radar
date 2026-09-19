@@ -16,6 +16,9 @@ class Settings(BaseSettings):
 
     environment: Literal["demo", "api", "production"] = "demo"
     auth_mode: Literal["demo", "none"] = "demo"
+    # Shared with the web app (ARVEXO_RADAR_SESSION_SECRET); verifies the signed
+    # session cookie. Unset only in local development and tests.
+    radar_session_secret: SecretStr | None = None
 
     database_url: str = "postgresql+asyncpg://arvexo:arvexo@localhost:5432/arvexo_radar"
 
@@ -76,6 +79,12 @@ class Settings(BaseSettings):
             or self.analytics_user_hash_salt == "demo-only-change-this-analytics-salt"
         ):
             raise ValueError("ARVEXO_ANALYTICS_USER_HASH_SALT must be set in production")
+        if self.environment == "production" and (
+            self.radar_session_secret is None
+            or len(self.radar_session_secret.get_secret_value()) < 32
+            or self.radar_session_secret.get_secret_value().startswith("replace-with")
+        ):
+            raise ValueError("ARVEXO_RADAR_SESSION_SECRET must be set in production")
         return self
 
 

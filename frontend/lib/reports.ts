@@ -1,3 +1,4 @@
+import { apiFetch } from "./api";
 import { apiV1Root } from "./datasets";
 
 export interface ReportSummary {
@@ -25,7 +26,7 @@ async function unwrap<T>(response: Response, failureMessage: string): Promise<T>
 }
 
 export async function createReport(runId: string): Promise<ReportSummary> {
-  const response = await fetch(`${apiV1Root()}/runs/${runId}/reports`, {
+  const response = await apiFetch(`${apiV1Root()}/runs/${runId}/reports`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
   });
@@ -33,7 +34,7 @@ export async function createReport(runId: string): Promise<ReportSummary> {
 }
 
 export async function getReport(reportId: string): Promise<ReportSummary> {
-  const response = await fetch(`${apiV1Root()}/reports/${reportId}`);
+  const response = await apiFetch(`${apiV1Root()}/reports/${reportId}`);
   return unwrap<ReportSummary>(response, "Не удалось получить статус отчёта");
 }
 
@@ -53,7 +54,7 @@ export async function pollReportUntilDone(
 }
 
 export async function downloadReportPdf(reportId: string, filename = `radar-report-${reportId}.pdf`): Promise<void> {
-  const response = await fetch(`${apiV1Root()}/reports/${reportId}/download`);
+  const response = await apiFetch(`${apiV1Root()}/reports/${reportId}/download`);
   if (!response.ok) throw new Error(`Не удалось скачать PDF-отчёт (HTTP ${response.status})`);
   const blob = await response.blob();
   const link = document.createElement("a");
