@@ -3,7 +3,7 @@
 /* eslint-disable @next/next/no-img-element -- decorative marketing images served from /public */
 import {
   ArrowRight, ArrowsOutCardinal, ArrowUpRight, BracketsCurly, CaretDown, CaretLeft, CaretRight,
-  CirclesFour, Command, Cube, Desktop, List, Play, Sparkle, X,
+  CirclesFour, Command, Cube, Desktop, List, Moon, Play, Sparkle, Sun, X,
 } from "@phosphor-icons/react";
 import { Manrope } from "next/font/google";
 import Link from "next/link";
@@ -42,13 +42,40 @@ const insights = [
 
 const ECOSYSTEM = "https://arvexo.ru";
 const COOKIE_KEY = "radar-cookies-accepted";
+const THEME_KEY = "radar-theme";
+
+type Theme = "light" | "dark";
 
 export function Landing() {
   const [cookieVisible, setCookieVisible] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [caseIndex, setCaseIndex] = useState(0);
   const [audienceHover, setAudienceHover] = useState<"team" | "company" | null>(null);
+  const [theme, setTheme] = useState<Theme>("light");
   const activeCase = cases[caseIndex];
+
+  useEffect(() => {
+    try {
+      const stored = window.localStorage.getItem(THEME_KEY);
+      if (stored === "light" || stored === "dark") {
+        setTheme(stored);
+        return;
+      }
+    } catch {
+      /* fall through to the system preference */
+    }
+    if (window.matchMedia("(prefers-color-scheme: dark)").matches) setTheme("dark");
+  }, []);
+
+  const toggleTheme = () => {
+    const next: Theme = theme === "dark" ? "light" : "dark";
+    setTheme(next);
+    try {
+      window.localStorage.setItem(THEME_KEY, next);
+    } catch {
+      /* storage unavailable: the choice lasts for this visit only */
+    }
+  };
 
   useEffect(() => {
     try {
@@ -68,8 +95,8 @@ export function Landing() {
   };
 
   return (
-    <main className={`radar-page ${manrope.className}`}>
-      <div className="hero-particles"><ParticleField mode="main" /></div>
+    <main className={`radar-page ${manrope.className}`} data-theme={theme}>
+      <div className="hero-particles"><ParticleField mode="main" theme={theme} /></div>
 
       <header className="site-header">
         <a className="rp-brand" href="#top" aria-label="ARVEXO Radar — главная">
@@ -79,7 +106,10 @@ export function Landing() {
         <nav aria-label="Основная навигация">
           {nav.map((item) => <a key={item.label} href={item.href}>{item.label}{item.menu && <CaretDown size={14} weight="regular" />}</a>)}
         </nav>
-        <Link className="login" href="/auth/login">Войти <ArrowUpRight size={16} weight="bold" /></Link>
+        <div className="header-actions">
+          <button className="theme-toggle" type="button" aria-label={theme === "dark" ? "Включить светлую тему" : "Включить тёмную тему"} onClick={toggleTheme}>{theme === "dark" ? <Sun size={18} /> : <Moon size={18} />}</button>
+          <Link className="login" href="/auth/login">Войти <ArrowUpRight size={16} weight="bold" /></Link>
+        </div>
         <button className="mobile-menu" type="button" aria-label="Открыть меню" onClick={() => setMenuOpen(true)}><List size={20} weight="bold" /></button>
       </header>
 
@@ -135,11 +165,11 @@ export function Landing() {
 
       <section className="audience-section" id="компания">
         <article className="rp-audience-card audience-card-team" onPointerEnter={() => setAudienceHover("team")} onPointerLeave={() => setAudienceHover(null)}>
-          <ParticleField mode="morph" shape="braces" hovered={audienceHover === "team"} />
+          <ParticleField mode="morph" shape="braces" theme={theme} hovered={audienceHover === "team"} />
           <div className="rp-audience-content"><span>Для команд</span><h2>Видьте, что<br /><em>работает</em></h2><p>От сценария до подтверждённого эффекта.</p><Link className="primary-action" href="/auth/login">Открыть Radar</Link></div>
         </article>
         <article className="rp-audience-card audience-card-company" onPointerEnter={() => setAudienceHover("company")} onPointerLeave={() => setAudienceHover(null)}>
-          <ParticleField mode="morph" shape="flower" hovered={audienceHover === "company"} />
+          <ParticleField mode="morph" shape="flower" theme={theme} hovered={audienceHover === "company"} />
           <div className="rp-audience-content"><span>Для компаний</span><h2>Масштабируйте<br /><em>эффект</em></h2><p>Единая методика для AI, FinOps и knowledge sharing.</p><a className="secondary-action" href={ECOSYSTEM}>Узнать больше</a></div>
         </article>
       </section>

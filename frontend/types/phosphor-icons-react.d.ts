@@ -53,5 +53,7 @@ declare module "@phosphor-icons/react" {
   export const Cube: IconComponent;
   export const Desktop: IconComponent;
   export const Play: IconComponent;
+  export const Moon: IconComponent;
+  export const Sun: IconComponent;
   export const X: IconComponent;
 }

@@ -503,7 +503,7 @@ export function createParticleField(container: HTMLElement, options: ParticleOpt
   const density = main ? (dark ? 220 : 230) : 50;
   const particlesScale = main ? (dark ? 0.65 : 0.59) : 0.6;
   const cameraZoom = main ? 3.1 : 8.8;
-  const colors = main ? (dark ? ["#7189ff", "#3074f9", "#000000"] : ["#2c64ed", "#f84242", "#ffcf03"]) : ["#676A72", "#FF4641", "#346BF1"];
+  const colors = main ? (dark ? ["#7189ff", "#3074f9", "#000000"] : ["#2c64ed", "#f84242", "#ffcf03"]) : (dark ? ["#318bf7", "#bada4c", "#e35058"] : ["#676A72", "#FF4641", "#346BF1"]);
   const ringWidth = dark ? 0.15 : 0.006;
   const ringWidth2 = dark ? 0.05 : 0.107;
   const ringDisplacement = dark ? 0.23 : 0.62;
