@@ -164,6 +164,16 @@ jobs:
             export API_IMAGE="${{ steps.images.outputs.api }}"
             export WEB_IMAGE="${{ steps.images.outputs.web }}"
 
+            # Persist immutable image tags so a later `docker compose up` can
+            # recreate every service. Keep the secret-bearing env file private.
+            temporary_env="$(mktemp .env.images.XXXXXX)"
+            trap 'rm -f "$temporary_env"' EXIT
+            grep -Ev '^(API_IMAGE|WEB_IMAGE)=' .env > "$temporary_env" || true
+            printf 'API_IMAGE=%s\nWEB_IMAGE=%s\n' "$API_IMAGE" "$WEB_IMAGE" >> "$temporary_env"
+            chmod 600 "$temporary_env"
+            mv "$temporary_env" .env
+            trap - EXIT
+
             docker compose -f docker-compose.prod.yml pull
             docker compose -f docker-compose.prod.yml up -d
             # Idempotent safety net: the api container already runs this on

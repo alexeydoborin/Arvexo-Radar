@@ -53,13 +53,18 @@ export function Landing({ research }: { research?: ReactNode }) {
     try {
       const stored = window.localStorage.getItem(THEME_KEY);
       if (stored === "light" || stored === "dark") {
+        // This runs after hydration so the server and initial client markup match.
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setTheme(stored);
         return;
       }
     } catch {
       /* fall through to the system preference */
     }
-    if (window.matchMedia("(prefers-color-scheme: dark)").matches) setTheme("dark");
+    if (window.matchMedia("(prefers-color-scheme: dark)").matches) {
+      // Read browser-only preference after hydration to avoid a server/client mismatch.
+      setTheme("dark");
+    }
   }, []);
 
   const toggleTheme = () => {
@@ -74,8 +79,13 @@ export function Landing({ research }: { research?: ReactNode }) {
 
   useEffect(() => {
     try {
-      if (window.localStorage.getItem(COOKIE_KEY) !== "1") setCookieVisible(true);
+      if (window.localStorage.getItem(COOKIE_KEY) !== "1") {
+        // Cookie preference is browser-only and intentionally applied after hydration.
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        setCookieVisible(true);
+      }
     } catch {
+      // Storage may be unavailable; keep the consent notice usable.
       setCookieVisible(true);
     }
   }, []);

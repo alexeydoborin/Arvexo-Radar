@@ -73,7 +73,11 @@ export async function readRadarSession(value?: string): Promise<RadarSession | n
 }
 
 export function safeReturnTo(value: string | null): string {
-  return value?.startsWith("/") && !value.startsWith("//") ? value : "/app";
+  if (!value?.startsWith("/") || value.startsWith("//") || value.includes("\\")) return "/app";
+  const destination = new URL(value, "https://radar.invalid");
+  return destination.origin === "https://radar.invalid"
+    ? `${destination.pathname}${destination.search}${destination.hash}`
+    : "/app";
 }
 
 export function accountApiUrl(): string {
@@ -85,7 +89,18 @@ export function radarClientId(): string {
 }
 
 export function radarCallbackUrl(origin: string): string {
-  return process.env.ARVEXO_RADAR_CALLBACK_URL ?? `${origin}/auth/callback`;
+  const configured = process.env.ARVEXO_RADAR_CALLBACK_URL;
+  if (configured) {
+    const callback = new URL(configured);
+    if (callback.protocol !== "https:" || callback.pathname !== "/auth/callback" || callback.search || callback.hash) {
+      throw new Error("ARVEXO_RADAR_CALLBACK_URL must be an HTTPS /auth/callback URL");
+    }
+    return callback.toString();
+  }
+  if (process.env.NODE_ENV === "production") {
+    throw new Error("ARVEXO_RADAR_CALLBACK_URL is required in production");
+  }
+  return `${origin}/auth/callback`;
 }
 
 /**

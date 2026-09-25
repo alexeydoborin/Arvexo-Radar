@@ -25,6 +25,7 @@ const contentSecurityPolicy = [
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  output: "standalone",
   poweredByHeader: false,
   // Keep CI and Windows developer builds deterministic on constrained hosts.
   experimental: { cpus: 1 },

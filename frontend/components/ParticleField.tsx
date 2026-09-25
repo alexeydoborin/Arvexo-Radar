@@ -13,8 +13,6 @@ type Props = {
 export function ParticleField({ mode = "main", shape, theme = "light", hovered = false }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const fieldRef = useRef<Field | null>(null);
-  const hoveredRef = useRef(hovered);
-  hoveredRef.current = hovered;
 
   useEffect(() => {
     const container = containerRef.current;
@@ -27,7 +25,6 @@ export function ParticleField({ mode = "main", shape, theme = "light", hovered =
       console.warn("Particle field unavailable", error);
     }
     fieldRef.current = field;
-    if (field && hoveredRef.current) field.setHovered(true);
     return () => {
       field?.destroy();
       fieldRef.current = null;

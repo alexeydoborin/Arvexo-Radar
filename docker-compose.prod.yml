@@ -64,8 +64,22 @@ services:
 
   web:
     image: ${WEB_IMAGE}
-    command: npm run start
-    env_file: .env
+    # Pass only frontend runtime settings. The root .env also contains database
+    # and LLM credentials that must never be available to the web process.
+    environment:
+      ARVEXO_ACCOUNT_API_URL: ${ARVEXO_ACCOUNT_API_URL:-http://localhost:8032}
+      ARVEXO_RADAR_CLIENT_ID: ${ARVEXO_RADAR_CLIENT_ID:-arvexo-radar}
+      ARVEXO_RADAR_CLIENT_SECRET: ${ARVEXO_RADAR_CLIENT_SECRET:?ARVEXO_RADAR_CLIENT_SECRET is required}
+      ARVEXO_RADAR_SESSION_SECRET: ${ARVEXO_RADAR_SESSION_SECRET:?ARVEXO_RADAR_SESSION_SECRET is required}
+      ARVEXO_RADAR_CALLBACK_URL: ${ARVEXO_RADAR_CALLBACK_URL:?ARVEXO_RADAR_CALLBACK_URL is required}
+    read_only: true
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=64m,mode=1777,uid=1001,gid=1001
+      - /app/.next/cache:rw,noexec,nosuid,size=128m,mode=0755,uid=1001,gid=1001
     ports:
       # Same loopback-only pattern as api — nginx proxies radar.arvexo.ru
       # here; override WEB_HOST_PORT in .env if it collides.
