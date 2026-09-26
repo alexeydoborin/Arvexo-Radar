@@ -41,3 +41,6 @@ deploy_key
 deploy_key.pub
 runs.json
 .claude
+
+# private market research (not for the public repo)
+/research/
