@@ -88,3 +88,20 @@ class BestPracticeStateError(ArvexoError):
 class AuthenticationRequiredError(ArvexoError):
     code = "AUTHENTICATION_REQUIRED"
     status = 401
+
+
+class ForbiddenError(ArvexoError):
+    code = "FORBIDDEN"
+    status = 403
+
+
+class RateLimitedError(ArvexoError):
+    code = "RATE_LIMITED"
+    status = 429
+    retryable = True
+
+
+class StorageUnavailableError(ArvexoError):
+    code = "STORAGE_UNAVAILABLE"
+    status = 507
+    retryable = True

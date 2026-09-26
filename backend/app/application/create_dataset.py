@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import asyncio
 import hashlib
+import uuid
 
 from app.config import Settings
 from app.domain.dataset_validation import parse_and_validate
@@ -46,6 +47,7 @@ class CreateDataset:
     async def execute(
         self,
         *,
+        tenant_id: uuid.UUID,
         display_name: str,
         raw_bytes: bytes,
         created_by: str,
@@ -56,7 +58,9 @@ class CreateDataset:
                 details={"max_bytes": self._settings.max_upload_bytes},
             )
 
-        tenant = await self._repository.get_or_create_demo_tenant()
+        tenant = await self._repository.get_or_create_tenant(
+            tenant_id, f"Arvexo Account {created_by}"
+        )
         checksum = hashlib.sha256(raw_bytes).hexdigest()
 
         existing = await self._repository.find_dataset_by_checksum(tenant.id, checksum)
@@ -79,7 +83,7 @@ class CreateDataset:
 
         dataset = await self._repository.create_dataset(
             tenant_id=tenant.id,
-            display_name=display_name,
+            display_name=display_name[:255],
             source_filename_safe="upload.csv",
             checksum=checksum,
             created_by=created_by,

@@ -21,10 +21,10 @@ class DatasetRepository:
     def __init__(self, session: AsyncSession) -> None:
         self._session = session
 
-    async def get_or_create_demo_tenant(self) -> Tenant:
-        tenant = await self._session.get(Tenant, DEMO_TENANT_ID)
+    async def get_or_create_tenant(self, tenant_id: uuid.UUID, name: str) -> Tenant:
+        tenant = await self._session.get(Tenant, tenant_id)
         if tenant is None:
-            tenant = Tenant(id=DEMO_TENANT_ID, name="Demo Tenant")
+            tenant = Tenant(id=tenant_id, name=name[:200])
             self._session.add(tenant)
             await self._session.flush()
         return tenant

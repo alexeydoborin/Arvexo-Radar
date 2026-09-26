@@ -15,7 +15,13 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", env_prefix="ARVEXO_", extra="ignore")
 
     environment: Literal["demo", "api", "production"] = "demo"
+    # "demo": Arvexo Account session required (the only mode allowed in
+    # production). "none": no authentication, local development/tests only.
     auth_mode: Literal["demo", "none"] = "demo"
+    # Arvexo Account emails allowed to change shared demo data (methodology,
+    # cost components, demo best practices) and to see org-wide LLM proxy
+    # telemetry. JSON list, e.g. ARVEXO_ADMIN_EMAILS=["owner@arvexo.ru"].
+    admin_emails: list[str] = []
     # Shared with the web app (ARVEXO_RADAR_SESSION_SECRET); verifies the signed
     # session cookie. Unset only in local development and tests.
     radar_session_secret: SecretStr | None = None
@@ -58,7 +64,17 @@ class Settings(BaseSettings):
         default="RUB", min_length=3, max_length=3, pattern=r"^[A-Z]{3}$"
     )
 
-    rate_limit_per_minute: int = 60
+    # Abuse limits per account (tenant). Uploads and runs cost disk and LLM
+    # money, so they are bounded independently of the generic write limit.
+    rate_limit_per_minute: int = Field(default=60, ge=1)
+    upload_limit_per_hour: int = Field(default=20, ge=1)
+    run_limit_per_day: int = Field(default=20, ge=1)
+    report_limit_per_hour: int = Field(default=30, ge=1)
+    tenant_storage_quota_bytes: int = Field(default=1_000_000_000, ge=0)
+    # Uploads are refused while the storage volume has less free space than
+    # this, so one tenant cannot fill a disk shared with Postgres/other apps.
+    min_free_disk_bytes: int = Field(default=2_000_000_000, ge=0)
+    max_concurrent_uploads: int = Field(default=2, ge=1)
 
     cors_origins: list[str] = ["http://localhost:3000", "http://127.0.0.1:3000"]
 
@@ -83,6 +99,8 @@ class Settings(BaseSettings):
             or self.analytics_user_hash_salt == "demo-only-change-this-analytics-salt"
         ):
             raise ValueError("ARVEXO_ANALYTICS_USER_HASH_SALT must be set in production")
+        if self.environment == "production" and self.auth_mode == "none":
+            raise ValueError("ARVEXO_AUTH_MODE=none is not allowed in production")
         if self.environment == "production" and (
             self.radar_session_secret is None
             or len(self.radar_session_secret.get_secret_value()) < 32
@@ -90,6 +108,10 @@ class Settings(BaseSettings):
         ):
             raise ValueError("ARVEXO_RADAR_SESSION_SECRET must be set in production")
         return self
+
+    @property
+    def admin_email_set(self) -> frozenset[str]:
+        return frozenset(email.strip().casefold() for email in self.admin_emails if email.strip())
 
 
 @lru_cache

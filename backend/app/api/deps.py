@@ -22,6 +22,7 @@ from app.services.enterprise_analytics import (
     EnterpriseAnalyticsService,
     enterprise_analytics_service,
 )
+from app.services.quotas import TenantQuotas
 
 
 def get_dataset_storage(settings: Settings = Depends(get_settings)) -> DatasetStorage:
@@ -105,10 +106,8 @@ async def get_generate_report_use_case(
     return GenerateReport(analysis_repository, dataset_repository, run_queries, storage, settings)
 
 
-def get_current_principal() -> str:
-    """Demo-mode principal (docs/16-security.md section 4).
-
-    Production profile must fail closed without a configured auth adapter;
-    that adapter does not exist yet, so this dependency is demo-mode only.
-    """
-    return "demo-user"
+def get_tenant_quotas(
+    session: AsyncSession = Depends(get_session),
+    settings: Settings = Depends(get_settings),
+) -> TenantQuotas:
+    return TenantQuotas(session, settings)

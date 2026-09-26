@@ -6,22 +6,29 @@ import uuid
 from fastapi import APIRouter, Depends, File, Form, Query, UploadFile
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.deps import get_create_dataset_use_case, get_current_principal, get_dataset_repository
+from app.api.auth import Principal, require_principal
+from app.api.deps import get_create_dataset_use_case, get_dataset_repository, get_tenant_quotas
 from app.application.create_dataset import CreateDataset
+from app.config import Settings, get_settings
 from app.domain.enums import DatasetStatus
-from app.domain.errors import DatasetInvalidError, DatasetNotFoundError
+from app.domain.errors import DatasetInvalidError, DatasetNotFoundError, RateLimitedError
 from app.infrastructure.db.session import get_session
-from app.repositories.dataset_repository import DEMO_TENANT_ID, DatasetRepository
+from app.repositories.dataset_repository import DatasetRepository
 from app.schemas.dataset import (
     DatasetResponse,
     PreviewResponse,
     PreviewRow,
     ValidationSummaryResponse,
 )
+from app.services.quotas import TenantQuotas
 
 router = APIRouter(prefix="/datasets", tags=["datasets"])
 
 _VALIDATION_CODE_RE = re.compile(r"^V\d{3}$")
+
+# Each upload is held in memory and parsed on a worker thread; bound how many
+# run at once so parallel 100MB uploads cannot exhaust the API's RAM.
+_uploads_in_progress = 0
 
 
 def _to_dataset_response(dataset) -> DatasetResponse:
@@ -39,23 +46,37 @@ async def create_dataset(
     display_name: str | None = Form(default=None),
     use_case: CreateDataset = Depends(get_create_dataset_use_case),
     session: AsyncSession = Depends(get_session),
-    principal: str = Depends(get_current_principal),
+    principal: Principal = Depends(require_principal),
+    quotas: TenantQuotas = Depends(get_tenant_quotas),
+    settings: Settings = Depends(get_settings),
 ) -> DatasetResponse:
-    raw_bytes = await file.read()
-    result = await use_case.execute(
-        display_name=display_name or (file.filename or "dataset"),
-        raw_bytes=raw_bytes,
-        created_by=principal,
-    )
-    await session.commit()
+    global _uploads_in_progress
+    if _uploads_in_progress >= settings.max_concurrent_uploads:
+        raise RateLimitedError("Radar is processing other uploads. Try again shortly.")
+    _uploads_in_progress += 1
+    try:
+        await quotas.check_upload(principal.tenant_id)
+        # Read one byte past the limit: enough to reject oversize files
+        # without buffering an arbitrarily large body.
+        raw_bytes = await file.read(settings.max_upload_bytes + 1)
+        result = await use_case.execute(
+            tenant_id=principal.tenant_id,
+            display_name=display_name or (file.filename or "dataset"),
+            raw_bytes=raw_bytes,
+            created_by=principal.user_id,
+        )
+        await session.commit()
+    finally:
+        _uploads_in_progress -= 1
     return _to_dataset_response(result.dataset)
 
 
 @router.get("", response_model=list[DatasetResponse])
 async def list_datasets(
     repository: DatasetRepository = Depends(get_dataset_repository),
+    principal: Principal = Depends(require_principal),
 ) -> list[DatasetResponse]:
-    datasets = await repository.list_datasets(tenant_id=DEMO_TENANT_ID)
+    datasets = await repository.list_datasets(tenant_id=principal.tenant_id)
     return [_to_dataset_response(d) for d in datasets]
 
 
@@ -63,8 +84,9 @@ async def list_datasets(
 async def get_dataset(
     dataset_id: uuid.UUID,
     repository: DatasetRepository = Depends(get_dataset_repository),
+    principal: Principal = Depends(require_principal),
 ) -> DatasetResponse:
-    dataset = await repository.get_dataset(tenant_id=DEMO_TENANT_ID, dataset_id=dataset_id)
+    dataset = await repository.get_dataset(tenant_id=principal.tenant_id, dataset_id=dataset_id)
     if dataset is None:
         raise DatasetNotFoundError("Dataset not found.", details={})
     return _to_dataset_response(dataset)
@@ -74,8 +96,9 @@ async def get_dataset(
 async def get_validation_summary(
     dataset_id: uuid.UUID,
     repository: DatasetRepository = Depends(get_dataset_repository),
+    principal: Principal = Depends(require_principal),
 ) -> ValidationSummaryResponse:
-    dataset = await repository.get_dataset(tenant_id=DEMO_TENANT_ID, dataset_id=dataset_id)
+    dataset = await repository.get_dataset(tenant_id=principal.tenant_id, dataset_id=dataset_id)
     if dataset is None:
         raise DatasetNotFoundError("Dataset not found.", details={})
 
@@ -115,8 +138,9 @@ async def get_preview(
     cursor: int = Query(default=0, ge=0),
     limit: int = Query(default=50, ge=1, le=200),
     repository: DatasetRepository = Depends(get_dataset_repository),
+    principal: Principal = Depends(require_principal),
 ) -> PreviewResponse:
-    dataset = await repository.get_dataset(tenant_id=DEMO_TENANT_ID, dataset_id=dataset_id)
+    dataset = await repository.get_dataset(tenant_id=principal.tenant_id, dataset_id=dataset_id)
     if dataset is None:
         raise DatasetNotFoundError("Dataset not found.", details={})
 

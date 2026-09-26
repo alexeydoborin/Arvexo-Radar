@@ -6,6 +6,7 @@ from typing import Any
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.exc import SQLAlchemyError
 
+from app.api.auth import Principal, require_principal
 from app.api.deps import get_analytics_repository, get_enterprise_analytics_service
 from app.repositories.analytics_repository import AnalyticsFilters, AnalyticsRepository
 from app.schemas.analytics import ModelAnalytics, OverviewResponse
@@ -50,6 +51,15 @@ def get_analytics_filters(
     )
 
 
+def get_org_telemetry(
+    principal: Principal = Depends(require_principal),
+    repository: AnalyticsRepository = Depends(get_analytics_repository),
+) -> AnalyticsRepository | None:
+    """LLM proxy telemetry is organisation-wide (not per account), so only
+    Radar administrators see it; everyone else gets the demo story."""
+    return repository if principal.is_admin else None
+
+
 def _legacy_filters(filters: EnterpriseFilters) -> AnalyticsFilters:
     return AnalyticsFilters(
         date_from=filters.date_from,
@@ -68,16 +78,17 @@ def _legacy_filters(filters: EnterpriseFilters) -> AnalyticsFilters:
 async def overview(
     filters: EnterpriseFilters = Depends(get_analytics_filters),
     service: EnterpriseAnalyticsService = Depends(get_enterprise_analytics_service),
-    repository: AnalyticsRepository = Depends(get_analytics_repository),
+    repository: AnalyticsRepository | None = Depends(get_org_telemetry),
 ) -> dict[str, Any]:
     payload = service.overview(filters)
     # Keep the v0.1 technical fields at the top level for backward-compatible
     # clients. In demo/offline mode the coherent demo story is the fallback.
     technical: dict[str, Any] = {}
     try:
-        technical = OverviewResponse.model_validate(
-            await repository.overview(_legacy_filters(filters))
-        ).model_dump(mode="json")
+        if repository is not None:
+            technical = OverviewResponse.model_validate(
+                await repository.overview(_legacy_filters(filters))
+            ).model_dump(mode="json")
     # Database access is optional in demo mode. Connection failures can surface
     # as either SQLAlchemy errors or OS-level socket errors.
     except (SQLAlchemyError, OSError):
@@ -124,13 +135,15 @@ async def overview(
 async def usage(
     filters: EnterpriseFilters = Depends(get_analytics_filters),
     service: EnterpriseAnalyticsService = Depends(get_enterprise_analytics_service),
-    repository: AnalyticsRepository = Depends(get_analytics_repository),
+    repository: AnalyticsRepository | None = Depends(get_org_telemetry),
 ) -> dict[str, Any]:
     payload = service.usage(filters)
     summary = payload["summary"]
     try:
-        live = await repository.usage(
-            _legacy_filters(filters), filters.date_to or datetime.now(UTC)
+        live = (
+            await repository.usage(_legacy_filters(filters), filters.date_to or datetime.now(UTC))
+            if repository is not None
+            else {}
         )
         if live.get("mau"):
             summary = {**summary, **live}
@@ -143,10 +156,10 @@ async def usage(
 async def models(
     filters: EnterpriseFilters = Depends(get_analytics_filters),
     service: EnterpriseAnalyticsService = Depends(get_enterprise_analytics_service),
-    repository: AnalyticsRepository = Depends(get_analytics_repository),
+    repository: AnalyticsRepository | None = Depends(get_org_telemetry),
 ) -> list[dict[str, Any]]:
     try:
-        live = await repository.models(_legacy_filters(filters))
+        live = await repository.models(_legacy_filters(filters)) if repository is not None else []
         if live:
             return [
                 ModelAnalytics.model_validate(row).model_dump(mode="json") for row in live
@@ -159,11 +172,13 @@ async def models(
 @router.get("/errors")
 async def errors(
     filters: EnterpriseFilters = Depends(get_analytics_filters),
-    repository: AnalyticsRepository = Depends(get_analytics_repository),
+    repository: AnalyticsRepository | None = Depends(get_org_telemetry),
 ) -> list[dict[str, Any]]:
     try:
+        if repository is None:
+            raise LookupError("organisation telemetry is admin-only")
         return await repository.errors(_legacy_filters(filters))
-    except SQLAlchemyError:
+    except (SQLAlchemyError, LookupError):
         return [
             {"error_type": "tool_error", "count": 594, "share": 60.6, "affected_models": ["Corporate LLM 70B"], "affected_scenarios": ["crm-followup"]},
             {"error_type": "provider_error", "count": 386, "share": 39.4, "affected_models": ["GigaChat Pro", "YandexGPT 5 Pro"], "affected_scenarios": ["contract-review", "management-report"]},

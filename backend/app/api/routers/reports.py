@@ -6,14 +6,20 @@ from fastapi import APIRouter, Depends, Header
 from fastapi.responses import Response
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.deps import get_analysis_repository, get_generate_report_use_case, get_report_storage
+from app.api.auth import Principal, require_principal
+from app.api.deps import (
+    get_analysis_repository,
+    get_generate_report_use_case,
+    get_report_storage,
+    get_tenant_quotas,
+)
 from app.application.generate_report import GenerateReport
 from app.domain.errors import ReportNotFoundError, ReportNotReadyError
 from app.infrastructure.db.session import get_session
 from app.infrastructure.storage import ReportStorage
 from app.repositories.analysis_repository import AnalysisRepository
-from app.repositories.dataset_repository import DEMO_TENANT_ID
 from app.schemas.report import ReportResponse
+from app.services.quotas import TenantQuotas
 
 router = APIRouter(tags=["reports"])
 
@@ -36,19 +42,24 @@ async def create_report(
     use_case: GenerateReport = Depends(get_generate_report_use_case),
     session: AsyncSession = Depends(get_session),
     idempotency_key: str | None = Header(default=None, alias="Idempotency-Key"),
+    principal: Principal = Depends(require_principal),
+    quotas: TenantQuotas = Depends(get_tenant_quotas),
 ) -> ReportResponse:
+    await quotas.check_report(principal.tenant_id)
     report = await use_case.execute(
-        tenant_id=DEMO_TENANT_ID, run_id=run_id, idempotency_key=idempotency_key
+        tenant_id=principal.tenant_id, run_id=run_id, idempotency_key=idempotency_key
     )
     await session.commit()
     return _to_report_response(report)
 
 
-async def _get_report_for_tenant(report_id: uuid.UUID, repo: AnalysisRepository):
+async def _get_report_for_tenant(
+    report_id: uuid.UUID, repo: AnalysisRepository, principal: Principal
+):
     report = await repo.get_report(report_id)
     if report is None:
         raise ReportNotFoundError("Report not found.", details={})
-    run = await repo.get_run(tenant_id=DEMO_TENANT_ID, run_id=report.run_id)
+    run = await repo.get_run(tenant_id=principal.tenant_id, run_id=report.run_id)
     if run is None:
         # Report exists but its run does not belong to this tenant: treat the
         # same as not-found rather than confirming the report id is valid.
@@ -60,8 +71,9 @@ async def _get_report_for_tenant(report_id: uuid.UUID, repo: AnalysisRepository)
 async def get_report(
     report_id: uuid.UUID,
     repo: AnalysisRepository = Depends(get_analysis_repository),
+    principal: Principal = Depends(require_principal),
 ) -> ReportResponse:
-    report = await _get_report_for_tenant(report_id, repo)
+    report = await _get_report_for_tenant(report_id, repo, principal)
     return _to_report_response(report)
 
 
@@ -70,8 +82,9 @@ async def download_report(
     report_id: uuid.UUID,
     repo: AnalysisRepository = Depends(get_analysis_repository),
     storage: ReportStorage = Depends(get_report_storage),
+    principal: Principal = Depends(require_principal),
 ) -> Response:
-    report = await _get_report_for_tenant(report_id, repo)
+    report = await _get_report_for_tenant(report_id, repo, principal)
     if report.status != "generated" or not report.storage_ref:
         raise ReportNotReadyError("Report is not ready for download.", details={"status": report.status})
 

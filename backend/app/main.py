@@ -1,7 +1,10 @@
+import uuid
+
 from fastapi import Depends, FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 
-from app.api.auth import require_session
+from app.api.auth import require_principal
 from app.api.error_handlers import arvexo_error_handler, unhandled_error_handler
 from app.api.routers import (
     analytics,
@@ -13,6 +16,7 @@ from app.api.routers import (
     runs,
     system,
 )
+from app.api.security import SAFE_METHODS, enforce_write_rate_limit, is_trusted_origin
 from app.config import get_settings
 from app.domain.errors import ArvexoError
 
@@ -33,6 +37,28 @@ async def add_security_headers(request: Request, call_next):
     return response
 
 
+@app.middleware("http")
+async def reject_cross_site_writes(request: Request, call_next):
+    if (
+        request.method not in SAFE_METHODS
+        and request.url.path.startswith("/api/")
+        and not is_trusted_origin(request, settings.cors_origins)
+    ):
+        return JSONResponse(
+            status_code=403,
+            content={
+                "error": {
+                    "code": "CROSS_SITE_REQUEST_REJECTED",
+                    "message": "Cross-site requests cannot change Radar data.",
+                    "retryable": False,
+                    "details": {},
+                    "correlation_id": str(uuid.uuid4()),
+                }
+            },
+        )
+    return await call_next(request)
+
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors_origins,
@@ -44,7 +70,7 @@ app.add_middleware(
 app.add_exception_handler(ArvexoError, arvexo_error_handler)
 app.add_exception_handler(Exception, unhandled_error_handler)
 
-protected = [Depends(require_session)]
+protected = [Depends(require_principal), Depends(enforce_write_rate_limit)]
 
 app.include_router(system.router, prefix="/api/v1")
 app.include_router(datasets.router, prefix="/api/v1", dependencies=protected)

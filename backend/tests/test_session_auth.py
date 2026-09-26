@@ -37,7 +37,7 @@ def make_cookie(*, secret: str = SECRET, exp_offset: int = 3600, **overrides: ob
 
 @pytest.fixture
 def secured_client():
-    settings = Settings(radar_session_secret=SECRET)
+    settings = Settings(auth_mode="demo", radar_session_secret=SECRET)
     app.dependency_overrides[get_settings] = lambda: settings
     try:
         yield TestClient(app, raise_server_exceptions=False)
@@ -94,8 +94,19 @@ def test_tampered_payload_is_rejected() -> None:
     assert verify_session(f"{forged}.{signature}", SECRET) is None
 
 
-def test_without_secret_local_development_stays_open() -> None:
-    settings = Settings(radar_session_secret=None)
+def test_missing_session_secret_fails_closed() -> None:
+    settings = Settings(auth_mode="demo", radar_session_secret=None)
+    app.dependency_overrides[get_settings] = lambda: settings
+    try:
+        client = TestClient(app, raise_server_exceptions=False)
+        client.cookies.set(SESSION_COOKIE, make_cookie())
+        assert client.get("/api/methodology").status_code == 401
+    finally:
+        app.dependency_overrides.pop(get_settings, None)
+
+
+def test_auth_mode_none_opens_local_development() -> None:
+    settings = Settings(auth_mode="none", radar_session_secret=None)
     app.dependency_overrides[get_settings] = lambda: settings
     try:
         assert TestClient(app).get("/api/methodology").status_code == 200
@@ -103,11 +114,22 @@ def test_without_secret_local_development_stays_open() -> None:
         app.dependency_overrides.pop(get_settings, None)
 
 
+def test_production_rejects_disabled_authentication() -> None:
+    with pytest.raises(ValueError, match="ARVEXO_AUTH_MODE=none"):
+        Settings(
+            environment="production",
+            auth_mode="none",
+            analytics_user_hash_salt="x" * 32,
+            radar_session_secret="s" * 40,
+        )
+
+
 @pytest.mark.parametrize("secret", [None, "short", "replace-with-at-least-32-random-characters"])
 def test_production_requires_a_real_session_secret(secret: str | None) -> None:
     with pytest.raises(ValueError, match="ARVEXO_RADAR_SESSION_SECRET"):
         Settings(
             environment="production",
+            auth_mode="demo",
             analytics_user_hash_salt="x" * 32,
             radar_session_secret=secret,
         )

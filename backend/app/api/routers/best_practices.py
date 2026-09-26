@@ -6,12 +6,12 @@ from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 
+from app.api.auth import Principal, require_principal
 from app.api.deps import get_best_practice_repository, get_enterprise_analytics_service
 from app.config import Settings, get_settings
 from app.domain.enums import BestPracticeStatus, PracticeAdoptionStatus
-from app.domain.errors import BestPracticeNotFoundError, BestPracticeStateError
+from app.domain.errors import BestPracticeNotFoundError, BestPracticeStateError, ForbiddenError
 from app.repositories.best_practice_repository import BestPracticeRepository
-from app.repositories.dataset_repository import DEMO_TENANT_ID
 from app.schemas.best_practice import (
     BestPracticeListResponse,
     BestPracticeResponse,
@@ -32,16 +32,23 @@ def _response(practice: Any) -> BestPracticeResponse:
 
 
 async def _db_practice(
-    practice_id: str, repository: BestPracticeRepository
+    practice_id: str, repository: BestPracticeRepository, principal: Principal
 ):
     try:
         parsed_id = uuid.UUID(practice_id)
     except ValueError as exc:
         raise BestPracticeNotFoundError("Best practice not found.", details={}) from exc
-    practice = await repository.get(tenant_id=DEMO_TENANT_ID, practice_id=parsed_id)
+    practice = await repository.get(tenant_id=principal.tenant_id, practice_id=parsed_id)
     if practice is None:
         raise BestPracticeNotFoundError("Best practice not found.", details={})
     return practice
+
+
+def _require_admin_for_demo(is_demo: bool, principal: Principal) -> None:
+    # The built-in demo catalog is shared by every account: read-only for
+    # users, changeable by Radar administrators only.
+    if is_demo and not principal.is_admin:
+        raise ForbiddenError("Demo best practices are read-only.")
 
 
 def _demo_practice(practice_id: str, service: EnterpriseAnalyticsService) -> dict[str, Any]:
@@ -56,6 +63,7 @@ async def _resolve_practice(
     repository: BestPracticeRepository,
     service: EnterpriseAnalyticsService,
     settings: Settings,
+    principal: Principal,
 ) -> tuple[Any, bool]:
     """Resolve a practice id to (practice, is_demo_source).
 
@@ -66,7 +74,7 @@ async def _resolve_practice(
     """
     if settings.environment != "demo":
         try:
-            return await _db_practice(practice_id, repository), False
+            return await _db_practice(practice_id, repository, principal), False
         except BestPracticeNotFoundError:
             pass
     return _demo_practice(practice_id, service), True
@@ -83,10 +91,11 @@ async def list_best_practices(
     repository: BestPracticeRepository = Depends(get_best_practice_repository),
     service: EnterpriseAnalyticsService = Depends(get_enterprise_analytics_service),
     settings: Settings = Depends(get_settings),
+    principal: Principal = Depends(require_principal),
 ) -> BestPracticeListResponse:
     if settings.environment != "demo":
         items, total = await repository.list(
-            tenant_id=DEMO_TENANT_ID,
+            tenant_id=principal.tenant_id,
             status=status,
             department=department,
             model=model,
@@ -125,10 +134,11 @@ async def top_best_practices(
     repository: BestPracticeRepository = Depends(get_best_practice_repository),
     service: EnterpriseAnalyticsService = Depends(get_enterprise_analytics_service),
     settings: Settings = Depends(get_settings),
+    principal: Principal = Depends(require_principal),
 ) -> BestPracticeTopResponse:
     practices: list[Any] = []
     if settings.environment != "demo":
-        practices, _ = await repository.list(tenant_id=DEMO_TENANT_ID, limit=200)
+        practices, _ = await repository.list(tenant_id=principal.tenant_id, limit=200)
     if not practices:
         practices = service.practices()
     practices = [item for item in practices if str(item.get("status") if isinstance(item, dict) else item.status) not in {"rejected", "archived"}]
@@ -159,8 +169,9 @@ async def get_best_practice(
     repository: BestPracticeRepository = Depends(get_best_practice_repository),
     service: EnterpriseAnalyticsService = Depends(get_enterprise_analytics_service),
     settings: Settings = Depends(get_settings),
+    principal: Principal = Depends(require_principal),
 ) -> BestPracticeResponse:
-    practice, _ = await _resolve_practice(practice_id, repository, service, settings)
+    practice, _ = await _resolve_practice(practice_id, repository, service, settings, principal)
     return _response(practice)
 
 
@@ -171,8 +182,14 @@ async def _transition(
     repository: BestPracticeRepository,
     service: EnterpriseAnalyticsService,
     settings: Settings,
+    principal: Principal,
 ) -> BestPracticeResponse:
-    practice, is_demo = await _resolve_practice(practice_id, repository, service, settings)
+    practice, is_demo = await _resolve_practice(
+        practice_id, repository, service, settings, principal
+    )
+    _require_admin_for_demo(is_demo, principal)
+    # The audit trail records the signed-in account, never a client-supplied name.
+    actor = principal.email
     if is_demo:
         current_status = practice["status"]
         allowed = {
@@ -183,7 +200,7 @@ async def _transition(
         }[action]
         if current_status not in allowed:
             raise HTTPException(status_code=409, detail=f"Cannot {action} practice in {current_status} status")
-        return _response(service.transition_practice(practice_id, action, request.actor))
+        return _response(service.transition_practice(practice_id, action, actor))
     current = BestPracticeStatus(practice.status)
     allowed_db = {
         "review": {BestPracticeStatus.DETECTED, BestPracticeStatus.UNDER_REVIEW},
@@ -197,34 +214,37 @@ async def _transition(
         await repository.publish(practice)
     else:
         target = {"review": BestPracticeStatus.UNDER_REVIEW, "approve": BestPracticeStatus.APPROVED, "reject": BestPracticeStatus.REJECTED}[action]
-        await repository.set_status(practice, target, actor=request.actor)
+        await repository.set_status(practice, target, actor=actor)
     await repository.commit()
     return _response(practice)
 
 
 @router.post("/{practice_id}/review", response_model=BestPracticeResponse)
-async def review_best_practice(practice_id: str, request: PracticeActionRequest, repository: BestPracticeRepository = Depends(get_best_practice_repository), service: EnterpriseAnalyticsService = Depends(get_enterprise_analytics_service), settings: Settings = Depends(get_settings)) -> BestPracticeResponse:
-    return await _transition(practice_id, "review", request, repository, service, settings)
+async def review_best_practice(practice_id: str, request: PracticeActionRequest, repository: BestPracticeRepository = Depends(get_best_practice_repository), service: EnterpriseAnalyticsService = Depends(get_enterprise_analytics_service), settings: Settings = Depends(get_settings), principal: Principal = Depends(require_principal)) -> BestPracticeResponse:
+    return await _transition(practice_id, "review", request, repository, service, settings, principal)
 
 
 @router.post("/{practice_id}/approve", response_model=BestPracticeResponse)
-async def approve_best_practice(practice_id: str, request: PracticeActionRequest = PracticeActionRequest(), repository: BestPracticeRepository = Depends(get_best_practice_repository), service: EnterpriseAnalyticsService = Depends(get_enterprise_analytics_service), settings: Settings = Depends(get_settings)) -> BestPracticeResponse:
-    return await _transition(practice_id, "approve", request, repository, service, settings)
+async def approve_best_practice(practice_id: str, request: PracticeActionRequest = PracticeActionRequest(), repository: BestPracticeRepository = Depends(get_best_practice_repository), service: EnterpriseAnalyticsService = Depends(get_enterprise_analytics_service), settings: Settings = Depends(get_settings), principal: Principal = Depends(require_principal)) -> BestPracticeResponse:
+    return await _transition(practice_id, "approve", request, repository, service, settings, principal)
 
 
 @router.post("/{practice_id}/reject", response_model=BestPracticeResponse)
-async def reject_best_practice(practice_id: str, request: PracticeActionRequest, repository: BestPracticeRepository = Depends(get_best_practice_repository), service: EnterpriseAnalyticsService = Depends(get_enterprise_analytics_service), settings: Settings = Depends(get_settings)) -> BestPracticeResponse:
-    return await _transition(practice_id, "reject", request, repository, service, settings)
+async def reject_best_practice(practice_id: str, request: PracticeActionRequest, repository: BestPracticeRepository = Depends(get_best_practice_repository), service: EnterpriseAnalyticsService = Depends(get_enterprise_analytics_service), settings: Settings = Depends(get_settings), principal: Principal = Depends(require_principal)) -> BestPracticeResponse:
+    return await _transition(practice_id, "reject", request, repository, service, settings, principal)
 
 
 @router.post("/{practice_id}/publish", response_model=BestPracticeResponse)
-async def publish_best_practice(practice_id: str, request: PracticeActionRequest = PracticeActionRequest(), repository: BestPracticeRepository = Depends(get_best_practice_repository), service: EnterpriseAnalyticsService = Depends(get_enterprise_analytics_service), settings: Settings = Depends(get_settings)) -> BestPracticeResponse:
-    return await _transition(practice_id, "publish", request, repository, service, settings)
+async def publish_best_practice(practice_id: str, request: PracticeActionRequest = PracticeActionRequest(), repository: BestPracticeRepository = Depends(get_best_practice_repository), service: EnterpriseAnalyticsService = Depends(get_enterprise_analytics_service), settings: Settings = Depends(get_settings), principal: Principal = Depends(require_principal)) -> BestPracticeResponse:
+    return await _transition(practice_id, "publish", request, repository, service, settings, principal)
 
 
 @router.post("/{practice_id}/recommend", response_model=BestPracticeResponse)
-async def recommend_best_practice(practice_id: str, request: PracticeRecommendRequest, repository: BestPracticeRepository = Depends(get_best_practice_repository), service: EnterpriseAnalyticsService = Depends(get_enterprise_analytics_service), settings: Settings = Depends(get_settings)) -> BestPracticeResponse:
-    practice, is_demo = await _resolve_practice(practice_id, repository, service, settings)
+async def recommend_best_practice(practice_id: str, request: PracticeRecommendRequest, repository: BestPracticeRepository = Depends(get_best_practice_repository), service: EnterpriseAnalyticsService = Depends(get_enterprise_analytics_service), settings: Settings = Depends(get_settings), principal: Principal = Depends(require_principal)) -> BestPracticeResponse:
+    practice, is_demo = await _resolve_practice(
+        practice_id, repository, service, settings, principal
+    )
+    _require_admin_for_demo(is_demo, principal)
     if is_demo:
         if practice["status"] not in {"approved", "published", "scaling"}:
             raise HTTPException(status_code=409, detail="Practice must be approved before recommendation")
@@ -239,25 +259,26 @@ async def recommend_best_practice(practice_id: str, request: PracticeRecommendRe
 
 
 @router.get("/{practice_id}/adoption")
-async def get_practice_adoption(practice_id: str, repository: BestPracticeRepository = Depends(get_best_practice_repository), service: EnterpriseAnalyticsService = Depends(get_enterprise_analytics_service), settings: Settings = Depends(get_settings)) -> dict[str, Any]:
+async def get_practice_adoption(practice_id: str, repository: BestPracticeRepository = Depends(get_best_practice_repository), service: EnterpriseAnalyticsService = Depends(get_enterprise_analytics_service), settings: Settings = Depends(get_settings), principal: Principal = Depends(require_principal)) -> dict[str, Any]:
     if settings.environment == "demo":
         rows = service.adoptions(practice_id)
         if rows is None:
             raise HTTPException(status_code=404, detail="Best practice not found")
     else:
-        practice = await _db_practice(practice_id, repository)
+        practice = await _db_practice(practice_id, repository, principal)
         rows = [{column.name: getattr(item, column.name) for column in item.__table__.columns} for item in await repository.list_adoptions(practice.id)]
     return {"items": rows, "summary": {"active_users": sum(int(row["active_users"]) for row in rows), "usages": sum(int(row["usages"]) for row in rows), "time_saved_after_adoption": sum(float(row["time_saved_after_adoption"]) for row in rows), "money_saved_after_adoption": sum(float(row["money_saved_after_adoption"]) for row in rows)}}
 
 
 @router.post("/{practice_id}/adoption")
-async def upsert_practice_adoption(practice_id: str, request: PracticeAdoptionInput, repository: BestPracticeRepository = Depends(get_best_practice_repository), service: EnterpriseAnalyticsService = Depends(get_enterprise_analytics_service), settings: Settings = Depends(get_settings)) -> dict[str, Any]:
+async def upsert_practice_adoption(practice_id: str, request: PracticeAdoptionInput, repository: BestPracticeRepository = Depends(get_best_practice_repository), service: EnterpriseAnalyticsService = Depends(get_enterprise_analytics_service), settings: Settings = Depends(get_settings), principal: Principal = Depends(require_principal)) -> dict[str, Any]:
     if settings.environment == "demo":
+        _require_admin_for_demo(True, principal)
         row = service.upsert_adoption(practice_id, request)
         if row is None:
             raise HTTPException(status_code=404, detail="Best practice not found")
         return row
-    practice = await _db_practice(practice_id, repository)
+    practice = await _db_practice(practice_id, repository, principal)
     row = await repository.upsert_adoption(practice_id=practice.id, target_department=request.target_department, status=PracticeAdoptionStatus(request.status), active_users=request.active_users, usages=request.usages, time_saved_after_adoption=request.time_saved_after_adoption, money_saved_after_adoption=request.money_saved_after_adoption, owner=request.owner, comment=request.comment)
     await repository.commit()
     return {column.name: getattr(row, column.name) for column in row.__table__.columns}

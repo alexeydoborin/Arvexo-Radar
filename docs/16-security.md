@@ -47,13 +47,19 @@ Controls: minimization, masked excerpts, provider abstraction, server-side key, 
 
 Controls: tenant/principal scope в repository, opaque UUID, authorization до lookup/download, negative tests.
 
+Реализация: каждый аккаунт Arvexo Account работает в собственном tenant (`uuid5` от id пользователя, `backend/app/api/auth.py`). Датасеты, прогоны, отчёты и найденные практики видны и изменяемы только владельцем; чужой ресурс отвечает 404. Общие демо-данные (демо-аналитика, демо-каталог практик, методика и cost components) доступны всем на чтение, а менять их и видеть org-wide телеметрию LLM proxy могут только администраторы из `ARVEXO_ADMIN_EMAILS`. Actor в аудите практик — email из сессии, а не значение из тела запроса. Проверяется `backend/tests/test_tenant_isolation.py` на реальном Postgres.
+
 ### SEC-07 — Denial of service
 
 Controls: upload/row/token/concurrency limits, rate limiting, job leases, bounded batches, timeouts, cancellation, DB connection limits.
 
+Реализация: маскирование работает за линейное время, разбор CSV вынесен из event loop; на аккаунт действуют лимиты `ARVEXO_UPLOAD_LIMIT_PER_HOUR`, `ARVEXO_RUN_LIMIT_PER_DAY`, `ARVEXO_REPORT_LIMIT_PER_HOUR`, квота `ARVEXO_TENANT_STORAGE_QUOTA_BYTES` и общий лимит изменений `ARVEXO_RATE_LIMIT_PER_MINUTE`; загрузки отклоняются при свободном месте ниже `ARVEXO_MIN_FREE_DISK_BYTES` и сверх `ARVEXO_MAX_CONCURRENT_UPLOADS`. nginx добавляет per-IP `limit_req` и пускает тело >1 МБ только на `/api/v1/datasets`.
+
 ### SEC-08 — Stored XSS / unsafe rendering
 
 Controls: React escaping, no raw HTML, sanitized report renderer, CSP/security headers, safe download disposition.
+
+CSP web-приложения выставляется на каждый запрос в `frontend/proxy.ts` с nonce и `'strict-dynamic'` вместо `'unsafe-inline'` для скриптов. Изменяющие запросы к API с чужим `Origin`/`Referer` (включая соседние поддомены `*.arvexo.ru`, для которых `SameSite=Lax` не работает) отклоняются с `CROSS_SITE_REQUEST_REJECTED`. Вебвизор Яндекс Метрики не включается на `/app`.
 
 ### SEC-09 — Secret/config compromise
 
@@ -65,7 +71,7 @@ Controls: immutable runs, checksums, config/model provenance, typed evidence lin
 
 ## 4. Authentication и authorization
 
-MVP architecture требует principal/tenant context. Demo mode использует локального principal только при явном `AUTH_MODE=demo`. Production profile должен fail closed без настроенного authentication adapter. Полный SSO/RBAC — post-MVP, но resources уже owner-scoped.
+Каждый запрос к `/api/*` (кроме health/ready) требует подписанную cookie сессии Arvexo Account; без `ARVEXO_RADAR_SESSION_SECRET` API отказывает всем (fail closed). Проверка отключается только явным `ARVEXO_AUTH_MODE=none` (локальная разработка и тесты), и `Settings` запрещает это в production. Роли: пользователь (свой tenant) и администратор (`ARVEXO_ADMIN_EMAILS`).
 
 Минимальные logical permissions: dataset upload/read, analysis create/read, report create/download, administration. Реальное назначение ролей утверждается до production deployment.
 

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from fastapi import APIRouter, Depends, HTTPException, Response, status
 
+from app.api.auth import require_admin
 from app.api.deps import get_enterprise_analytics_service
 from app.schemas.enterprise import (
     CostComponentInput,
@@ -13,6 +14,10 @@ from app.services.enterprise_analytics import EnterpriseAnalyticsService
 
 router = APIRouter(tags=["Methodology and costs"])
 
+# Methodology and cost components are shared by every account, so only Radar
+# administrators may change them; everyone else reads them.
+admin_only = [Depends(require_admin)]
+
 
 @router.get("/methodology", response_model=MethodologyResponse)
 async def get_methodology(
@@ -21,7 +26,7 @@ async def get_methodology(
     return MethodologyResponse.model_validate(service.methodology())
 
 
-@router.put("/methodology", response_model=MethodologyResponse)
+@router.put("/methodology", response_model=MethodologyResponse, dependencies=admin_only)
 async def update_methodology(
     value: MethodologyUpdate,
     service: EnterpriseAnalyticsService = Depends(get_enterprise_analytics_service),
@@ -40,15 +45,23 @@ async def list_cost_components(
     "/cost-components",
     response_model=CostComponentResponse,
     status_code=status.HTTP_201_CREATED,
+    dependencies=admin_only,
 )
 async def create_cost_component(
     value: CostComponentInput,
     service: EnterpriseAnalyticsService = Depends(get_enterprise_analytics_service),
 ) -> CostComponentResponse:
-    return CostComponentResponse.model_validate(service.create_cost_component(value))
+    row = service.create_cost_component(value)
+    if row is None:
+        raise HTTPException(status_code=409, detail="Cost component limit reached")
+    return CostComponentResponse.model_validate(row)
 
 
-@router.put("/cost-components/{component_id}", response_model=CostComponentResponse)
+@router.put(
+    "/cost-components/{component_id}",
+    response_model=CostComponentResponse,
+    dependencies=admin_only,
+)
 async def update_cost_component(
     component_id: str,
     value: CostComponentInput,
@@ -60,7 +73,11 @@ async def update_cost_component(
     return CostComponentResponse.model_validate(row)
 
 
-@router.delete("/cost-components/{component_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete(
+    "/cost-components/{component_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    dependencies=admin_only,
+)
 async def delete_cost_component(
     component_id: str,
     service: EnterpriseAnalyticsService = Depends(get_enterprise_analytics_service),

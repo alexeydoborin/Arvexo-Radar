@@ -82,6 +82,9 @@ def _normalize(value: str) -> str:
     return value.casefold().strip()
 
 
+MAX_COST_COMPONENTS = 200
+
+
 class EnterpriseAnalyticsService:
     """Demo adapter implementing the complete analytics contract.
 
@@ -275,7 +278,10 @@ class EnterpriseAnalyticsService:
     def list_cost_components(self) -> list[dict[str, Any]]:
         return copy.deepcopy(self._cost_components)
 
-    def create_cost_component(self, value: CostComponentInput) -> dict[str, Any]:
+    def create_cost_component(self, value: CostComponentInput) -> dict[str, Any] | None:
+        # Held in process memory: bound it so the list cannot grow without limit.
+        if len(self._cost_components) >= MAX_COST_COMPONENTS:
+            return None
         row = {"id": str(uuid.uuid4()), **value.model_dump(mode="json")}
         self._cost_components.append(row)
         return copy.deepcopy(row)
