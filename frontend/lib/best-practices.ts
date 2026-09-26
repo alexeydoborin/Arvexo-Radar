@@ -1,4 +1,4 @@
-import { apiFetch } from "./api";
+import { apiFetch, describeApiFailure } from "./api";
 
 export type BestPracticeStatus =
   | "detected"
@@ -84,11 +84,11 @@ export async function recommendPractice(practice: BestPractice): Promise<BestPra
   let current = practice;
   if (current.status !== "approved" && current.status !== "published") {
     const approved = await apiFetch(`${apiRoot()}/best-practices/${practice.id}/approve`, { method: "POST" });
-    if (!approved.ok) throw new Error("Не удалось согласовать практику");
+    if (!approved.ok) throw new Error(describeApiFailure(approved.status) ?? "Не удалось согласовать практику");
     current = await approved.json();
   }
   if (current.status === "published") return current;
   const published = await apiFetch(`${apiRoot()}/best-practices/${practice.id}/publish`, { method: "POST" });
-  if (!published.ok) throw new Error("Не удалось опубликовать практику");
+  if (!published.ok) throw new Error(describeApiFailure(published.status) ?? "Не удалось опубликовать практику");
   return await published.json();
 }

@@ -1,4 +1,4 @@
-import { apiFetch } from "./api";
+import { apiFetch, describeApiFailure } from "./api";
 
 export type DataStatus = "actual" | "estimate" | "mixed" | "demo";
 
@@ -104,7 +104,7 @@ export interface DataResult<T> {
 async function request<T>(path: string, init?: RequestInit): Promise<DataResult<T>> {
   try {
     const response = await apiFetch(`${apiRoot()}${path}`, { ...init, signal: AbortSignal.timeout(4000), headers: { "Content-Type": "application/json", ...(init?.headers ?? {}) } });
-    if (!response.ok) throw new Error(`Radar API вернул ошибку ${response.status}`);
+    if (!response.ok) throw new Error(describeApiFailure(response.status) ?? `Radar API вернул ошибку ${response.status}`);
     return { data: await response.json() as T, demo: false };
   } catch (caught) {
     // No fabricated numbers here (docs/11-dashboard.md UI-AC-09): if the API

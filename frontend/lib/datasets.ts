@@ -1,4 +1,4 @@
-import { apiFetch } from "./api";
+import { apiFetch, describeApiFailure } from "./api";
 
 export interface DatasetSummary {
   id: string;
@@ -45,7 +45,7 @@ async function unwrap<T>(response: Response, failureMessage: string): Promise<T>
     } catch {
       // response body was not JSON — ignore and fall back to the generic message
     }
-    throw new Error(detail || `${failureMessage} (HTTP ${response.status})`);
+    throw new Error(detail || describeApiFailure(response.status) || `${failureMessage} (HTTP ${response.status})`);
   }
   return response.json() as Promise<T>;
 }

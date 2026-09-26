@@ -13,3 +13,15 @@ export async function apiFetch(input: string, init?: RequestInit): Promise<Respo
   }
   return response;
 }
+
+const FAILURE_MESSAGES: Record<number, string> = {
+  403: "Недостаточно прав: общие демо-данные меняет только администратор Radar.",
+  413: "Файл слишком большой или закончилась квота хранилища.",
+  429: "Превышен лимит запросов. Попробуйте позже.",
+  507: "Хранилище Radar заполнено. Попробуйте позже.",
+};
+
+/** User-facing text for access-control and quota responses, if any. */
+export function describeApiFailure(status: number): string | undefined {
+  return FAILURE_MESSAGES[status];
+}

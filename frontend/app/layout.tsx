@@ -1,5 +1,6 @@
 import "./globals.css";
 import type { Metadata } from "next";
+import { headers } from "next/headers";
 import Script from "next/script";
 import { Providers } from "./providers";
 
@@ -50,11 +51,14 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  // Per-request CSP nonce from proxy.ts; reading it renders pages dynamically,
+  // which nonces require.
+  const nonce = (await headers()).get("x-nonce") ?? undefined;
   return (
     <html lang="ru">
       <body>
-        <Script id="yandex-metrika" strategy="afterInteractive">
+        <Script id="yandex-metrika" strategy="afterInteractive" nonce={nonce}>
           {`
             (function(m,e,t,r,i,k,a){
               m[i]=m[i]||function(){(m[i].a=m[i].a||[]).push(arguments)};
@@ -64,7 +68,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               }
               k=e.createElement(t),a=e.getElementsByTagName(t)[0],k.async=1,k.src=r,a.parentNode.insertBefore(k,a);
             })(window,document,'script','https://mc.yandex.ru/metrika/tag.js?id=112824798','ym');
-            ym(112824798,'init',{ssr:true,webvisor:true,clickmap:true,ecommerce:'dataLayer',referrer:document.referrer,url:location.href,accurateTrackBounce:true,trackLinks:true});
+            ym(112824798,'init',{ssr:true,webvisor:!(location.pathname==='/app'||location.pathname.indexOf('/app/')===0),clickmap:true,ecommerce:'dataLayer',referrer:document.referrer,url:location.href,accurateTrackBounce:true,trackLinks:true});
           `}
         </Script>
         <noscript>
