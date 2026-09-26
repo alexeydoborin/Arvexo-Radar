@@ -8,12 +8,24 @@ services:
     volumes:
       - db_data:/var/lib/postgresql/data
     ports:
-      - "5432:5432"
+      # Loopback only: never expose the development database to the LAN.
+      - "127.0.0.1:5432:5432"
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-arvexo}"]
       interval: 5s
       timeout: 5s
       retries: 10
+
+  storage-init:
+    build: ./backend
+    # The api/worker image runs as UID 1001; volumes from older root images
+    # keep root-owned files, so hand them over before they start.
+    user: "0:0"
+    command: chown -R 1001:1001 /data/storage /data/model-cache
+    volumes:
+      - controlled_storage:/data/storage
+      - model_cache:/data/model-cache
+    network_mode: none
 
   api:
     build: ./backend
@@ -25,10 +37,12 @@ services:
       - ./backend/app:/app/app
       - controlled_storage:/data/storage
     ports:
-      - "8000:8000"
+      - "127.0.0.1:8000:8000"
     depends_on:
       db:
         condition: service_healthy
+      storage-init:
+        condition: service_completed_successfully
 
   worker:
     build: ./backend
@@ -41,6 +55,8 @@ services:
     depends_on:
       db:
         condition: service_healthy
+      storage-init:
+        condition: service_completed_successfully
 
   web:
     build: ./frontend
@@ -51,7 +67,7 @@ services:
       - /app/node_modules
       - /app/.next
     ports:
-      - "3000:3000"
+      - "127.0.0.1:3000:3000"
     depends_on:
       - api
 

@@ -37,12 +37,43 @@ services:
       retries: 10
     restart: unless-stopped
 
+  storage-init:
+    image: ${API_IMAGE}
+    # api/worker run as UID 1001. Volumes created while they still ran as
+    # root keep root-owned files, so hand them over once per deploy; this is
+    # the only container that runs as root, with no network and only the
+    # capabilities chown needs.
+    user: "0:0"
+    command: chown -R 1001:1001 /data/storage /data/model-cache
+    volumes:
+      - controlled_storage:/data/storage
+      - model_cache:/data/model-cache
+    network_mode: none
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    cap_add:
+      - CHOWN
+      - DAC_OVERRIDE
+      - FOWNER
+    restart: "no"
+
   api:
     image: ${API_IMAGE}
     command: >
       sh -c "alembic upgrade head &&
              uvicorn app.main:app --host 0.0.0.0 --port 8000"
     env_file: .env
+    read_only: true
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    tmpfs:
+      # Multipart uploads spool here (up to ARVEXO_MAX_UPLOAD_BYTES each,
+      # ARVEXO_MAX_CONCURRENT_UPLOADS at a time).
+      - /tmp:rw,noexec,nosuid,size=512m,mode=1777
     volumes:
       - controlled_storage:/data/storage
     ports:
@@ -57,12 +88,21 @@ services:
     depends_on:
       db:
         condition: service_healthy
+      storage-init:
+        condition: service_completed_successfully
     restart: unless-stopped
 
   worker:
     image: ${API_IMAGE}
     command: python -m app.worker.main
     env_file: .env
+    read_only: true
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=64m,mode=1777
     volumes:
       - controlled_storage:/data/storage
       - model_cache:/data/model-cache
@@ -72,6 +112,8 @@ services:
     depends_on:
       db:
         condition: service_healthy
+      storage-init:
+        condition: service_completed_successfully
     restart: unless-stopped
 
   web:
