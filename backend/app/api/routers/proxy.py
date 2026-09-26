@@ -1,15 +1,17 @@
 from __future__ import annotations
 
 import asyncio
+import hmac
 from collections.abc import AsyncIterator
 from typing import Annotated, Any
 
 import httpx
-from fastapi import APIRouter, Body, Depends, Header
+from fastapi import APIRouter, Body, Depends, Header, HTTPException
 from fastapi.responses import JSONResponse, Response, StreamingResponse
 from pydantic import ValidationError
 
 from app.api.deps import get_openai_proxy_client, get_telemetry_recorder
+from app.config import Settings, get_settings
 from app.infrastructure.providers.openai_proxy import OpenAIProxyClient
 from app.schemas.proxy import ChatCompletionRequest, RadarMetadata
 from app.services.analytics_telemetry import (
@@ -64,6 +66,29 @@ def _metadata(
     )
 
 
+def require_proxy_client(
+    authorization: str | None = Header(default=None, alias="Authorization"),
+    settings: Settings = Depends(get_settings),
+) -> None:
+    """Reject callers that would spend the server's provider key without a token.
+
+    In pass-through mode (no server key) the caller's own Authorization is
+    forwarded and the provider authenticates it, so nothing is checked here.
+    """
+    if not settings.llm_proxy_api_key:
+        return
+    token = settings.llm_proxy_client_token
+    expected = f"Bearer {token.get_secret_value()}" if token else ""
+    if not token or not token.get_secret_value() or not hmac.compare_digest(
+        (authorization or "").encode(), expected.encode()
+    ):
+        raise HTTPException(
+            status_code=401,
+            detail="A valid Radar proxy token is required.",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+
 def _proxy_error(status_code: int, error_type: ErrorType, request_id: str) -> JSONResponse:
     return JSONResponse(
         status_code=status_code,
@@ -96,7 +121,7 @@ async def _finalize_cancelled(
         await task
 
 
-@router.post("/v1/chat/completions")
+@router.post("/v1/chat/completions", dependencies=[Depends(require_proxy_client)])
 async def chat_completions(
     raw_body: dict[str, Any] = Body(...),
     authorization: str | None = Header(default=None, alias="Authorization"),

@@ -10,6 +10,7 @@ would not need to change.
 
 from __future__ import annotations
 
+import asyncio
 import hashlib
 
 from app.config import Settings
@@ -64,7 +65,11 @@ class CreateDataset:
             assert latest_version is not None  # every persisted dataset has >=1 version
             return CreateDatasetResult(existing, latest_version, reused_existing=True)
 
-        parsed = parse_and_validate(raw_bytes, max_row_chars=self._settings.max_row_chars)
+        # CPU-bound pass over up to max_upload_bytes: run it off the event loop
+        # so one large upload cannot stall every other API request.
+        parsed = await asyncio.to_thread(
+            parse_and_validate, raw_bytes, max_row_chars=self._settings.max_row_chars
+        )
 
         status = DatasetStatus.VALIDATED
         if parsed.is_dataset_rejected:

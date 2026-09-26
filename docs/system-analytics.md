@@ -152,4 +152,7 @@ docker compose exec api alembic upgrade head
 
 Production требует уникальный секрет `ARVEXO_ANALYTICS_USER_HASH_SALT`,
 `ARVEXO_LLM_PROXY_BASE_URL`, provider key (или входящий Authorization) и единую
-валюту отчётности `ARVEXO_ANALYTICS_CURRENCY=RUB`. Конвертация валют вне scope MVP.
+валюту отчётности `ARVEXO_ANALYTICS_CURRENCY=RUB`. Если задан серверный
+`ARVEXO_LLM_PROXY_API_KEY`, агенты обязаны передавать
+`Authorization: Bearer <ARVEXO_LLM_PROXY_CLIENT_TOKEN>`; без настроенного токена
+proxy отвечает 401 и не расходует серверный ключ. Конвертация валют вне scope MVP.

@@ -18,12 +18,18 @@ services:
     image: pgvector/pgvector:pg16
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-arvexo}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-arvexo}
+      # No fallback: a missing password must fail the deploy, not start the
+      # database with the well-known development credentials.
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
       POSTGRES_DB: ${POSTGRES_DB:-arvexo_radar}
     volumes:
       - db_data:/var/lib/postgresql/data
     # Not published outside the Docker network in production
     # (docs/16-security.md: "DB не публикуется в production profile").
+    # Only on the internal `data` network: reachable from api/worker, never
+    # from web and without any route to the internet.
+    networks:
+      - data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-arvexo}"]
       interval: 5s
@@ -45,6 +51,9 @@ services:
       # directly from outside the server. Override API_HOST_PORT in .env
       # if it collides with something else already bound on the host.
       - "127.0.0.1:${API_HOST_PORT:-38000}:8000"
+    networks:
+      - data
+      - egress
     depends_on:
       db:
         condition: service_healthy
@@ -57,6 +66,9 @@ services:
     volumes:
       - controlled_storage:/data/storage
       - model_cache:/data/model-cache
+    networks:
+      - data
+      - egress
     depends_on:
       db:
         condition: service_healthy
@@ -84,9 +96,23 @@ services:
       # Same loopback-only pattern as api — nginx proxies radar.arvexo.ru
       # here; override WEB_HOST_PORT in .env if it collides.
       - "127.0.0.1:${WEB_HOST_PORT:-38080}:3000"
+    # Isolated network: the browser reaches the API through nginx, so the web
+    # server never needs db or api. A compromised web container (incident of
+    # 2026-09-24) must not be able to reach Postgres or api's internal port.
+    networks:
+      - web
     depends_on:
       - api
     restart: unless-stopped
+
+networks:
+  # db <-> api/worker only; `internal` removes the route to the internet.
+  data:
+    internal: true
+  # Outbound access for api/worker (LLM providers).
+  egress:
+  # web alone: outbound to Arvexo Account for the SSO code exchange.
+  web:
 
 volumes:
   db_data:

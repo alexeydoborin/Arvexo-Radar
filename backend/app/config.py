@@ -48,6 +48,10 @@ class Settings(BaseSettings):
     # version prefix, for example https://api.openai.com/v1.
     llm_proxy_base_url: str | None = None
     llm_proxy_api_key: str | None = None
+    # Bearer token agents must present whenever the proxy substitutes the
+    # server's own key (llm_proxy_api_key). Unset means such requests are
+    # rejected, so the proxy is never an open relay for the corporate key.
+    llm_proxy_client_token: SecretStr | None = None
     llm_proxy_timeout_seconds: float = 60.0
     analytics_user_hash_salt: str = "demo-only-change-this-analytics-salt"
     analytics_currency: str = Field(

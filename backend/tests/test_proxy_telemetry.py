@@ -11,6 +11,7 @@ from fastapi.testclient import TestClient
 
 from app.api.deps import get_openai_proxy_client, get_telemetry_recorder
 from app.api.routers.proxy import chat_completions
+from app.config import Settings, get_settings
 from app.main import app
 from app.schemas.proxy import ChatCompletionRequest, RadarMetadata
 from app.services.analytics_telemetry import TelemetryContext
@@ -278,3 +279,64 @@ async def test_runtime_stream_failure_records_error() -> None:
 
 def test_asyncio_is_available_for_disconnect_path() -> None:
     assert asyncio.CancelledError is not None
+
+
+def _server_key_settings(client_token: str | None) -> Settings:
+    return Settings(
+        llm_proxy_base_url="https://provider.example/v1",
+        llm_proxy_api_key="server-provider-key",
+        llm_proxy_client_token=client_token,
+    )
+
+
+@pytest.mark.parametrize(
+    ("client_token", "authorization"),
+    [
+        (None, None),
+        (None, "Bearer anything"),
+        ("radar-agent-token", None),
+        ("radar-agent-token", "Bearer wrong-token"),
+        ("radar-agent-token", "radar-agent-token"),
+    ],
+    ids=["no-token-configured", "token-unconfigured-any-bearer", "missing", "wrong", "no-scheme"],
+)
+def test_server_key_mode_rejects_callers_without_client_token(
+    client_token: str | None, authorization: str | None
+) -> None:
+    proxy_client = FakeProxyClient(_response(json={"choices": []}))
+    recorder = FakeRecorder()
+    client = _client_with_overrides(proxy_client, recorder)
+    app.dependency_overrides[get_settings] = lambda: _server_key_settings(client_token)
+    headers = {"Authorization": authorization} if authorization else {}
+    try:
+        response = client.post(
+            "/v1/chat/completions",
+            headers=headers,
+            json={"model": "m", "messages": [{"role": "user", "content": "x"}]},
+        )
+    finally:
+        app.dependency_overrides.pop(get_settings, None)
+        _cleanup_overrides()
+
+    assert response.status_code == 401
+    assert proxy_client.payload is None
+    assert recorder.contexts == []
+
+
+def test_server_key_mode_accepts_valid_client_token() -> None:
+    proxy_client = FakeProxyClient(_response(json={"choices": []}))
+    recorder = FakeRecorder()
+    client = _client_with_overrides(proxy_client, recorder)
+    app.dependency_overrides[get_settings] = lambda: _server_key_settings("radar-agent-token")
+    try:
+        response = client.post(
+            "/v1/chat/completions",
+            headers={"Authorization": "Bearer radar-agent-token"},
+            json={"model": "m", "messages": [{"role": "user", "content": "x"}]},
+        )
+    finally:
+        app.dependency_overrides.pop(get_settings, None)
+        _cleanup_overrides()
+
+    assert response.status_code == 200
+    assert proxy_client.payload is not None
