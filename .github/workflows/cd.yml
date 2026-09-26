@@ -276,10 +276,13 @@ jobs:
             redirects_ready=false
             for i in $(seq 1 20); do
               login_target="$(curl -sS -o /dev/null -w '%{redirect_url}' "${origin}/auth/login")"
-              logout_target="$(curl -sS -o /dev/null -w '%{redirect_url}' "${origin}/auth/logout")"
+              logout_target="$(curl -sS -o /dev/null -w '%{redirect_url}' -X POST -H "Origin: ${origin}" "${origin}/auth/logout")"
+              # Sign-out is POST-only and same-origin (no logout CSRF).
+              foreign_logout="$(curl -sS -o /dev/null -w '%{http_code}' -X POST -H "Origin: https://evil.example" "${origin}/auth/logout")"
 
               if [[ "$login_target" == https://account.arvexo.ru/* ]] \
-                 && [[ "$logout_target" == "${origin}/" ]]; then
+                 && [[ "$logout_target" == "${origin}/" ]] \
+                 && [[ "$foreign_logout" == "403" ]]; then
                 redirects_ready=true
                 echo "Auth redirects healthy after ${i} attempt(s)."
                 break

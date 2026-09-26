@@ -138,6 +138,7 @@ def test_production_requires_non_demo_hash_salt() -> None:
         auth_mode="demo",
         analytics_user_hash_salt="a-long-production-secret",
         radar_session_secret="a-long-production-session-secret-0123456789",
+        cors_origins=["https://radar.arvexo.ru"],
     )
     assert settings.analytics_user_hash_salt == "a-long-production-secret"
 

@@ -107,6 +107,12 @@ class Settings(BaseSettings):
             or self.radar_session_secret.get_secret_value().startswith("replace-with")
         ):
             raise ValueError("ARVEXO_RADAR_SESSION_SECRET must be set in production")
+        if self.environment == "production" and any(
+            not origin.startswith("https://") for origin in self.cors_origins
+        ):
+            # Credentialed CORS for http:// (e.g. the localhost defaults) would
+            # let a local page read signed-in API responses.
+            raise ValueError("ARVEXO_CORS_ORIGINS must list only https:// origins in production")
         return self
 
     @property

@@ -133,3 +133,14 @@ def test_production_requires_a_real_session_secret(secret: str | None) -> None:
             analytics_user_hash_salt="x" * 32,
             radar_session_secret=secret,
         )
+
+
+def test_production_rejects_plain_http_cors_origins() -> None:
+    with pytest.raises(ValueError, match="ARVEXO_CORS_ORIGINS"):
+        Settings(
+            environment="production",
+            auth_mode="demo",
+            analytics_user_hash_salt="x" * 32,
+            radar_session_secret="s" * 40,
+            cors_origins=["http://localhost:3000"],
+        )
