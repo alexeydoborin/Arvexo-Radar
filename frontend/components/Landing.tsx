@@ -7,9 +7,10 @@ import {
 import { Manrope } from "next/font/google";
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { LogoMark } from "@/components/LogoMark";
 import { ParticleField } from "@/components/ParticleField";
+import { metrikaGoals, trackMetrikaGoal } from "@/lib/metrika";
 import "../app/landing.css";
 
 const manrope = Manrope({ subsets: ["latin", "cyrillic"], weight: ["400", "500", "600", "700", "800"], display: "swap" });
@@ -47,6 +48,7 @@ export function Landing({ research }: { research?: ReactNode }) {
   const [caseIndex, setCaseIndex] = useState(0);
   const [audienceHover, setAudienceHover] = useState<"team" | "company" | null>(null);
   const [theme, setTheme] = useState<Theme>("light");
+  const casesRef = useRef<HTMLElement>(null);
   const activeCase = cases[caseIndex];
 
   useEffect(() => {
@@ -99,6 +101,19 @@ export function Landing({ research }: { research?: ReactNode }) {
     }
   };
 
+  useEffect(() => {
+    const casesSection = casesRef.current;
+    if (!casesSection || typeof IntersectionObserver === "undefined") return;
+
+    const observer = new IntersectionObserver(([entry]) => {
+      if (!entry.isIntersecting) return;
+      trackMetrikaGoal(metrikaGoals.casesView);
+      observer.disconnect();
+    }, { threshold: 0.35 });
+    observer.observe(casesSection);
+    return () => observer.disconnect();
+  }, []);
+
   return (
     <main className={`radar-page ${manrope.className}`} data-theme={theme}>
       <div className="hero-particles"><ParticleField mode="main" theme={theme} /></div>
@@ -135,7 +150,7 @@ export function Landing({ research }: { research?: ReactNode }) {
         <h1 id="hero-title">Видьте эффект ИИ<br />в масштабе компании.</h1>
         <p className="hero-sub">Аналитика промптов и эффективности ИИ: классификация запросов, ROI и лучшие практики.</p>
         <div className="rp-hero-actions">
-          <Link className="primary-action" href="/auth/login"><Desktop size={18} weight="regular" />Открыть Radar</Link>
+          <Link className="primary-action" href="/auth/login" onClick={() => trackMetrikaGoal(metrikaGoals.openRadarCta)}><Desktop size={18} weight="regular" />Открыть Radar</Link>
           <a className="secondary-action" href="#сценарии">Посмотреть сценарии</a>
         </div>
       </section>
@@ -169,7 +184,7 @@ export function Landing({ research }: { research?: ReactNode }) {
         </article>)}
       </section>
 
-      <section className="cases-section" id="сценарии">
+      <section className="cases-section" id="сценарии" ref={casesRef}>
         <div className="two-col-heading"><h2>Создан для команд,<br />которые внедряют ИИ</h2><p>Radar помогает увидеть реальный эффект, сравнить сценарии и безопасно передать работающие практики всей компании.</p></div>
         <div className="case-gallery">
           {cases.map((item, index) => <button key={item.name} className={index === caseIndex ? "case-card active" : "case-card"} type="button" onClick={() => setCaseIndex(index)}><Image src={item.image} alt={item.alt} width={1536} height={1024} sizes="(max-width: 760px) 90vw, 33vw" /><span>{item.name}</span></button>)}
@@ -187,7 +202,7 @@ export function Landing({ research }: { research?: ReactNode }) {
       <section className="audience-section" id="компания">
         <article className="rp-audience-card audience-card-team" onPointerEnter={() => setAudienceHover("team")} onPointerLeave={() => setAudienceHover(null)}>
           <ParticleField mode="morph" shape="braces" theme={theme} hovered={audienceHover === "team"} />
-          <div className="rp-audience-content"><span>Для команд</span><h2>Видьте, что<br /><em>работает</em></h2><p>От сценария до подтверждённого эффекта.</p><Link className="primary-action" href="/auth/login">Открыть Radar</Link></div>
+          <div className="rp-audience-content"><span>Для команд</span><h2>Видьте, что<br /><em>работает</em></h2><p>От сценария до подтверждённого эффекта.</p><Link className="primary-action" href="/auth/login" onClick={() => trackMetrikaGoal(metrikaGoals.openRadarCta)}>Открыть Radar</Link></div>
         </article>
         <article className="rp-audience-card audience-card-company" onPointerEnter={() => setAudienceHover("company")} onPointerLeave={() => setAudienceHover(null)}>
           <ParticleField mode="morph" shape="flower" theme={theme} hovered={audienceHover === "company"} />
@@ -199,7 +214,7 @@ export function Landing({ research }: { research?: ReactNode }) {
 
       <section className="final-cta" id="методика">
         <ParticleField mode="main" theme="dark" />
-        <div className="final-content"><h2>Эффект ИИ<br />становится видимым.</h2><p>Подключите Radar и начните измерять то, что работает.</p><Link href="/auth/login">Открыть Radar <ArrowRight size={17} /></Link></div>
+        <div className="final-content"><h2>Эффект ИИ<br />становится видимым.</h2><p>Подключите Radar и начните измерять то, что работает.</p><Link href="/auth/login" onClick={() => trackMetrikaGoal(metrikaGoals.openRadarCta)}>Открыть Radar <ArrowRight size={17} /></Link></div>
       </section>
 
       <footer>

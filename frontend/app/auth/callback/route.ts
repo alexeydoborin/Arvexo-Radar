@@ -29,7 +29,9 @@ export async function GET(request: NextRequest) {
     if (!body.account_user?.id || !body.account_user.email) return authError(request, "invalid_profile");
 
     const returnTo = safeReturnTo(request.cookies.get(RADAR_RETURN_COOKIE)?.value ?? null);
-    const response = NextResponse.redirect(radarPublicUrl(returnTo, request.nextUrl.origin));
+    const destination = radarPublicUrl(returnTo, request.nextUrl.origin);
+    destination.searchParams.set("metrika_login", "success");
+    const response = NextResponse.redirect(destination);
     response.cookies.set(RADAR_SESSION_COOKIE, await createRadarSession(body.account_user), {
       httpOnly: true,
       sameSite: "lax",
